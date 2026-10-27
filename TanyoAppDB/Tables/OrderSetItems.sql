@@ -58,16 +58,16 @@ CREATE TABLE [dbo].[OrderSetItems] (
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_OrderSetItems_OrderId_IsDeleted_ItemStatus_SubjectTypeId_SubjectId]
-    ON [dbo].[OrderSetItems]([OrderId] ASC, [IsDeleted] ASC, [ItemStatus] ASC, [SubjectTypeId] ASC, [SubjectId] ASC)
-    INCLUDE([ParentOrderSetItemId]) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [IX_NC_OrderSetItems_SubjectId]
+    ON [dbo].[OrderSetItems]([SubjectId] ASC, [IsDeleted] ASC, [ItemStatus] ASC)
+    INCLUDE([Quantity]) WITH (FILLFACTOR = 80);
 
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_NC_OrderSetItems_SubjectId]
-    ON [dbo].[OrderSetItems]([SubjectId] ASC, [IsDeleted] ASC, [ItemStatus] ASC)
-    INCLUDE([Quantity]) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [IX_OrderSetItems_OrderId_IsDeleted_ItemStatus_SubjectTypeId_SubjectId]
+    ON [dbo].[OrderSetItems]([OrderId] ASC, [IsDeleted] ASC, [ItemStatus] ASC, [SubjectTypeId] ASC, [SubjectId] ASC)
+    INCLUDE([ParentOrderSetItemId]) WITH (FILLFACTOR = 80);
 
 
 GO

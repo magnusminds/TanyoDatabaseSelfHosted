@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[SaveTenant] (
+CREATE PROCEDURE [dbo].[SaveTenant] (
 	@TenantName VARCHAR(150)
 	,@FirstName VARCHAR(50)
 	,@LastName VARCHAR(50)
@@ -19,7 +19,7 @@ CREATE   PROCEDURE [dbo].[SaveTenant] (
 	,@GSTNo VARCHAR(20) = ''
 	,@GSTType BIT = 1
 	,@IsAutoManufacture BIT = 0
-	,@WebsiteURL VARCHAR (250) = NULL
+	,@WebsiteURL VARCHAR(250) = NULL
 	)
 WITH ENCRYPTION
 AS
@@ -37,7 +37,7 @@ BEGIN
 		DECLARE @Date DATETIME = GETDATE()
 		DECLARE @DateUTC DATETIME = GETUTCDATE()
 		DECLARE @ReferalCode CHAR(6)
-		DECLARE @DateOffset DATETIMEOFFSET = SYSDATETIMEOFFSET() 
+		DECLARE @DateOffset DATETIMEOFFSET = SYSDATETIMEOFFSET()
 		DECLARE @AspNetSystemUsersId NVARCHAR(450)
 		DECLARE @SystemUserId INT
 
@@ -143,7 +143,7 @@ BEGIN
 				,OnBoardingDate
 				,LiveDate
 				,NextRenewAt
-				,STATUS
+				,Status
 				,LastUpdatedBy
 				,LastUpdatedDate
 				)
@@ -229,15 +229,15 @@ BEGIN
 			SELECT @AspNetSystemUsersId
 				,'System'
 				,'User'
-				,'system.user0' + CAST(@TenantId AS VARCHAR (16)) +'@yopmail.com'
-				,UPPER('system.user0' + CAST(@TenantId AS VARCHAR (16)) +'@yopmail.com')
-				,'system.user0' + CAST(@TenantId AS VARCHAR (16)) +'@yopmail.com'
-				,UPPER('system.user0' + CAST(@TenantId AS VARCHAR (16)) +'@yopmail.com')
+				,'system.user0' + CAST(@TenantId AS VARCHAR(16)) + '@yopmail.com'
+				,UPPER('system.user0' + CAST(@TenantId AS VARCHAR(16)) + '@yopmail.com')
+				,'system.user0' + CAST(@TenantId AS VARCHAR(16)) + '@yopmail.com'
+				,UPPER('system.user0' + CAST(@TenantId AS VARCHAR(16)) + '@yopmail.com')
 				,1
 				,@PasswordHash --Password@1  
 				,1
-				,0 
-				,NULL 
+				,0
+				,NULL
 				,0
 				,0
 				,0
@@ -304,15 +304,14 @@ BEGIN
 				,'SUPERVISOR_' + CAST(@TenantId AS VARCHAR(MAX))
 				,NEWID()
 				,@TenantId
-
+			
 			UNION ALL
 			
-			SELECT @SystemRoleId 
+			SELECT @SystemRoleId
 				,'SystemUser_' + CAST(@TenantId AS VARCHAR(MAX))
 				,'SYSTEMUSER_' + CAST(@TenantId AS VARCHAR(MAX))
 				,NEWID()
 				,@TenantId
-
 
 			PRINT 'Roles Created Successfully'
 
@@ -629,8 +628,20 @@ BEGIN
 			
 			SELECT @RoleId
 				,'permission'
+				,'Permissions.General.Order.View'
+
+			UNION ALL
+			
+			SELECT @RoleId
+				,'permission'
 				,'Permissions.Portal.Order.SendNotifications'
 			
+			UNION ALL
+			
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.SendNotifications'
+
 			UNION ALL
 			
 			SELECT @RoleId
@@ -641,8 +652,20 @@ BEGIN
 			
 			SELECT @RoleId
 				,'permission'
+				,'Permissions.General.Order.Delete'
+
+			UNION ALL
+			
+			SELECT @RoleId
+				,'permission'
 				,'Permissions.Portal.Order.Create'
 			
+			UNION ALL
+			
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.Create'
+
 			UNION ALL
 			
 			SELECT @RoleId
@@ -1158,6 +1181,12 @@ BEGIN
 			SELECT @RoleId
 				,'permission'
 				,'Permissions.App.Order.View'
+
+			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.View'
 			
 			UNION ALL
 			
@@ -1166,11 +1195,23 @@ BEGIN
 				,'Permissions.App.Order.ShareQuotation'
 			
 			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.ShareQuotation'
+
+			UNION ALL
 			
 			SELECT @RoleId
 				,'permission'
 				,'Permissions.App.Order.MaterialReceive'
 			
+			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.MaterialReceive'
+
 			UNION ALL
 			
 			SELECT @RoleId
@@ -1178,11 +1219,23 @@ BEGIN
 				,'Permissions.App.Order.ExchangeOrderGstType'
 			
 			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.ExchangeOrderGstType'
+
+			UNION ALL
 			
 			SELECT @RoleId
 				,'permission'
 				,'Permissions.App.Order.Delete'
 			
+			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.Delete'
+
 			UNION ALL
 			
 			SELECT @RoleId
@@ -1190,17 +1243,35 @@ BEGIN
 				,'Permissions.App.Order.Decline'
 			
 			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.Decline'
+
+			UNION ALL
 			
 			SELECT @RoleId
 				,'permission'
 				,'Permissions.App.Order.Create'
 			
 			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.Create'
+
+			UNION ALL
 			
 			SELECT @RoleId
 				,'permission'
 				,'Permissions.App.Order.Approve'
 			
+			UNION ALL
+
+			SELECT @RoleId
+				,'permission'
+				,'Permissions.General.Order.Approve'
+
 			UNION ALL
 			
 			SELECT @RoleId
@@ -1374,9 +1445,9 @@ BEGIN
 			SELECT @UserId
 				,@TenantId
 				,@UserId
-
+			
 			UNION ALL
-
+			
 			SELECT @SystemUserId
 				,@TenantId
 				,@SystemUserId
@@ -1482,21 +1553,21 @@ BEGIN
 			SELECT 'LeadSources'
 				,@TenantId
 				,@UserId
-
+			
 			UNION ALL
-
+			
 			SELECT 'SpecializedIn'
 				,@TenantId
 				,@UserId
-
+			
 			UNION ALL
-
+			
 			SELECT 'PurchaseUrgency'
 				,@TenantId
 				,@UserId
-
+			
 			UNION ALL
-
+			
 			SELECT 'CustomerBehavior'
 				,@TenantId
 				,@UserId
@@ -1578,14 +1649,14 @@ BEGIN
 				,@UserId
 			
 			UNION ALL
-						
+			
 			SELECT 'RawMaterialInventory'
 				,'RawMaterialInventory'
 				,@TenantId
 				,@UserId
 			
 			UNION ALL
-						
+			
 			SELECT 'Inward'
 				,'Inward'
 				,@TenantId
@@ -1627,7 +1698,7 @@ BEGIN
 				,@UserId
 			
 			UNION ALL
-																		
+			
 			SELECT 'POProducts'
 				,'POProducts'
 				,@TenantId
@@ -1723,15 +1794,15 @@ BEGIN
 			SELECT 'Welcome Email'
 				,@TenantId
 				,@UserId
-
+			
 			UNION ALL
-
+			
 			SELECT 'Stock Transfer PDF'
 				,@TenantId
 				,@UserId
 			
 			UNION ALL
-
+			
 			SELECT 'BuyingRange'
 				,@TenantId
 				,@UserId
@@ -1765,10 +1836,10 @@ BEGIN
 
 
 
-  
-  
-  
-  
+
+
+
+
   
   
 d  
@@ -1779,8 +1850,8 @@ er-bottom: 1px solid #d68b33; text-align: center; padding: 10px;">  <div><a styl
 
 
 
-  
-  
+
+
   
   
   
@@ -1814,8 +1885,8 @@ rgin: 0 0 5px; font-weight: 400;">Hello <span style="font-weight: bold;"> ##cust
 
 
 
-  
-  
+
+
   
   
   
@@ -1827,8 +1898,8 @@ nd: #f3f4f5;" cellspacing="0" cellpadding="0">  <tbody>  <tr>  <td style="paddin
 
 
 
-  
-  
+
+
   
   
   
@@ -1840,8 +1911,8 @@ nd: #f3f4f5;" cellspacing="0" cellpadding="0">  <tbody>  <tr>  <td style="paddin
 
 
 
-  
-  
+
+
   
   
   
@@ -1853,8 +1924,8 @@ argin: 0; color: #000000; font-weight: 600;">Inquiry Date: <span style="display:
 
 
 
-  
-  
+
+
   
   
   
@@ -1866,8 +1937,8 @@ e: 14px; margin: 0; color: #000000; font-weight: 600;">Salesman: <span style="di
 
 
 
-  
-  
+
+
   
   
   
@@ -1879,8 +1950,8 @@ e: 14px; margin: 0; color: #000000; font-weight: 600;">Salesman: <span style="di
 
 
 
-  
-  
+
+
   
   
   
@@ -1892,8 +1963,8 @@ n: none; text-align: center; cursor: pointer; display: inline-block; border-radi
 
 
 
-  
-  
+
+
   
   
   
@@ -1905,8 +1976,8 @@ er">See order details</a></td>  </tr>  <!-- Single Set End --><!-- Address Start
 
 
 
-  
-  
+
+
   
   
   
@@ -1918,8 +1989,8 @@ er">See order details</a></td>  </tr>  <!-- Single Set End --><!-- Address Start
 
 
 
-  
-  
+
+
   
   
   
@@ -1931,8 +2002,8 @@ er">See order details</a></td>  </tr>  <!-- Single Set End --><!-- Address Start
 
 
 
-  
-  
+
+
   
   
   
@@ -1944,8 +2015,8 @@ er">See order details</a></td>  </tr>  <!-- Single Set End --><!-- Address Start
 
 
 
-  
-  
+
+
   
   
   
@@ -1971,8 +2042,8 @@ er">See order details</a></td>  </tr>  <!-- Single Set End --><!-- Address Start
 
 
 
-  
-  
+
+
   
   
   
@@ -1983,8 +2054,8 @@ align: top;">  <div class="content" style="box-sizing: border-box; display: bloc
 
 
 
-  
-  
+
+
   
   
   
@@ -1996,8 +2067,8 @@ order-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin: 0; width
 
 
 
-  
-  
+
+
   
   
   
@@ -2009,8 +2080,8 @@ sizing: border-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin:
 
 
 
-  
-  
+
+
   
   
   
@@ -2022,8 +2093,8 @@ sizing: border-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin:
 
 
 
-  
-  
+
+
   
   
   
@@ -2035,8 +2106,8 @@ tyle="text-align: center; vertical-align: top;">Click on the link below to see y
 
 
 
-  
-  
+
+
   
   
   
@@ -2075,20 +2146,20 @@ tyle="text-align: center; vertical-align: top;">Click on the link below to see y
 
 
 
+
+
   
   
   
   
-  
- 
 align: top;">  <div class="content" style="box-sizing: border-box; display: block; font-family: ''Roboto'',sans-serif; font-size: 14px; max-width: 600px; padding: 20px; margin: 0 auto 0 auto;">  <table class="main" style="border-radius: 3px; box-sizing: b
 
 
 
 
 
-  
-  
+
+
   
   
   
@@ -2100,8 +2171,8 @@ order-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin: 0; width
 
 
 
-  
-  
+
+
   
   
   
@@ -2113,8 +2184,8 @@ sizing: border-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin:
 
 
 
-  
-  
+
+
   
   
   
@@ -2126,8 +2197,8 @@ sizing: border-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin:
 
 
 
-  
-  
+
+
   
   
   
@@ -2139,8 +2210,8 @@ tyle="text-align: center; vertical-align: top;">Click on the link below to see y
 
 
 
-  
-  
+
+
   
   
   
@@ -2183,12 +2254,12 @@ tyle="text-align: center; vertical-align: top;">Click on the link below to see y
 
 
 
+
+
+
+
  
 
-  
-  
-  
-  
   
   
 align: top;">  <div class="content" style="box-sizing: border-box; display: block; font-family: ''Roboto'',sans-serif; font-size: 14px; max-width: 600px; padding: 20px; margin: 0 auto 0 auto;">  <table class="main" style="border-radius: 3px; box-sizing: b
@@ -2197,8 +2268,8 @@ align: top;">  <div class="content" style="box-sizing: border-box; display: bloc
 
 
 
-  
-  
+
+
   
   
   
@@ -2210,8 +2281,8 @@ order-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin: 0; width
 
 
 
-  
-  
+
+
   
   
   
@@ -2223,8 +2294,8 @@ sizing: border-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin:
 
 
 
-  
-  
+
+
   
   
   
@@ -2236,9 +2307,9 @@ sizing: border-box; font-family: ''Roboto'',sans-serif; font-size: 14px; margin:
 
 
 
+
+
  
-  
-  
   
   
   
@@ -2253,8 +2324,8 @@ tyle="text-align: center; vertical-align: top;">Click on the link below to see y
 
 
 
-  
-  
+
+
   
   
   
@@ -2401,7 +2472,7 @@ pt, .esd-block-html table { width:auto!important } table.es-social { display:inl
 
 
 
- 
+
 2px solid #f6f6f6;}::-webkit-scrollbar-thumb:hover {box-shadow: inset 0 0 6px rgba(0,0,0,0.3);}textarea::-webkit-scrollbar-track {margin: 15px;}</style><base href="#"></head>  
  <body style="width:100%;font-family:helvetica, ''helvetica neue'', arial, verdana, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">  
   <div dir="ltr" class="es-wrapper-color" lang="und">  
@@ -2636,7 +2707,7 @@ rcle-colored.png" alt="Skype" width="24" height="24" style="display:block;border
            </tbody></table></td>  
          </tr>  
        </tbody></table></td>  
-     </tr>  
+    </tr>  
    </tbody></table>  
   </div>  
 </body></html>'
@@ -2816,7 +2887,7 @@ l, verdana, sans-serif;font-size:14px;text-decoration:underline;color:#999999"><
           <td align="center" style="padding:0;Margin:0">  
            <table bgcolor="#ffffff" class="es-content-body" align="center" cellpadding="0" cellspacing="0" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px">  
              <tbody><tr style="border-collapse:collapse">  
-              <td align="left" style="padding:0;Margin:0;background-position:center top;background-color:#202447" bgcolor="#202447">  
+      <td align="left" style="padding:0;Margin:0;background-position:center top;background-color:#202447" bgcolor="#202447">  
                <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">  
                  <tbody><tr style="border-collapse:collapse">  
                   <td align="center" valign="top" style="padding:0;Margin:0;width:600px">  
@@ -3028,7 +3099,7 @@ rcle-colored.png" alt="Skype" width="24" height="24" style="display:block;border
 .ExternalClass div {  
  line-height:100%;  
 }  
-.es-button {  
+.es-button { 
  mso-style-priority:100!important;  
  text-decoration:none!important;  
 }  
@@ -3315,7 +3386,7 @@ verdana, sans-serif;line-height:21px;color:#FFFFFF"></p></td>
                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">  
                      <tbody><tr style="border-collapse:collapse">  
                       <td align="center" class="es-m-txt-c" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px;font-size:0">  
-                       <table cellpadding="0" cellspacing="0" class="es-table-not-adapt es-social" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">  
+  <table cellpadding="0" cellspacing="0" class="es-table-not-adapt es-social" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">  
                          <tbody><tr style="border-collapse:collapse">  
                              <td align="center" valign="top "  style="cursor:pointer;padding:0;Margin:0;padding-right:10px"><a target="_blank" href="##tenantfacebookurl##"><img title="Facebook"  src="https://tlr.stripocdn.email/content/assets/img/social-
 
@@ -3386,8 +3457,8 @@ rcle-colored.png" alt="Skype" width="24" height="24" style="display:block;border
 
 
 
-  
-  
+
+
   
   
   
@@ -3398,8 +3469,8 @@ er-bottom: 1px solid #d68b33; text-align: center; padding: 10px;">  <div><a styl
 
 
 
-  
-  
+
+
   
   
   
@@ -3433,8 +3504,8 @@ rgin: 0 0 5px; font-weight: 400;">Hello <span style="font-weight: bold;"> ##cust
 
 
 
-  
-  
+
+
   
   
   
@@ -3446,8 +3517,8 @@ f3f4f5;" cellspacing="0" cellpadding="0">  <tbody>  <tr>  <td style="padding: 5p
 
 
 
-  
-  
+
+
   
   
   
@@ -3459,8 +3530,8 @@ x; margin: 0; color: #000000; font-weight: 600;">Your Inquiry ID: <span style="d
 
 
 
-  
-  
+
+
   
   
   
@@ -3472,8 +3543,8 @@ x; margin: 0; color: #000000; font-weight: 600;">Your Inquiry ID: <span style="d
 
 
 
-  
-  
+
+
   
   
   
@@ -3485,8 +3556,8 @@ px; margin: 0; color: #000000; font-weight: 600;">Salesman: <span style="display
 
 
 
-  
-  
+
+
   
   
   
@@ -3498,8 +3569,8 @@ able>  </td>  </tr>  <!-- Single Set Start --> <!-- Address Start --> <!-- Price
 
 
 
-  
-  
+
+
   
   
   
@@ -3511,8 +3582,8 @@ able>  </td>  </tr>  <!-- Single Set Start --> <!-- Address Start --> <!-- Price
 
 
 
-  
-  
+
+
   
   
   
@@ -3524,8 +3595,8 @@ yle="display: block; font-size: 14px; color: #5e5e5e; line-height: 100%; margin:
 
 
 
-  
-  
+
+
   
   
   
@@ -3537,8 +3608,8 @@ table>  </td>  </tr>  <!-- Product Information End --> <!-- footer Start -->  <t
 
 
 
-  
-  
+
+
   
   
   
@@ -3729,7 +3800,7 @@ x 10px; display: block;">Billing Address</span> <span style="margin: 0; font-siz
 <p style="margin: 8px 0; font-size: 14px;">Total line item discount</p>  
 </td>  
 <td style="border-bottom: 2px dashed #f1f2f3; padding-right: 120px; width: 170px;">  
-<p style="margin: 8px 0; text-align: right; color: #008000; font-size: 14px;">##discountAmount##</p>  
+<p style="margin: 8px 0; text-align: right; color: #008000; font-size: 14px;">##discountAmount##</p> 
 </td>  
 </tr>  
 </tbody>  
@@ -3863,7 +3934,7 @@ x 10px; display: block;">Billing Address</span> <span style="margin: 0; font-siz
 </tbody>  
 </table>  
 </td>  
-</tr>  
+</tr> 
 <tr>  
 <td>  
 <table style="width: 100%;" cellspacing="0" cellpadding="0">  
@@ -4002,274 +4073,43 @@ x 10px; display: block;">Billing Address</span> <span style="margin: 0; font-siz
 					)
 				,'OrderDispatch PDF'
 				,
-				'<div style="width: 1200px; margin: auto; border: 1px solid #3e3e3e; background: #FFFFFF; box-sizing: border-box;">  <div class="step1" style="box-sizing: border-box; border-bottom: 1px solid #3e3e3e;">  <div style="width: 85%; display: inline-block  
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-; float: left; box-sizing: border-box; height: 112px; border-right: 1px solid #3e3e3e; text-align: center;">  <div>  <h3 style="margin: 0; font-size: 22px; color: #3e3e3e; text-transform: uppercase; padding: 8px 0; border-bottom: 1px solid #3e3e3e;">##ten
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-antName##</h3>  <p style="margin: 0; padding: 8px 0; border-bottom: 1px solid #3e3e3e;">##tenantAddress##</p>  <p style="margin: 0; padding: 8px 0;"><strong>Phone:</strong> ##phoneNumber## | <strong>Email:</strong> ##emailId## | <strong>GST:</strong> ##GS
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-TNo##</p>  </div>  </div>  <div style="height: 112px; width: 15%; display: inline-block; padding: 15px 0 0; box-sizing: border-box; font-size: 0; text-align: center;"><a style="width: 80px; height: 80px; margin: auto; display: inline-block; vertical-align
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-: middle; background: #3e3e3e; padding: 5px; border-radius: 10px; box-sizing: border-box;" href="" target="_blank" rel="noopener"> <img style="width: 100%; height: 100%;" src="##tenantLogoPath##" alt="##tenantName##" /> </a>
-
-  
-  
-  
-  
-  
-  
-  
-</div>  </div>  <div class="step2" style="margin: 10px; background: #ffffff; overflow: hidden; height: 43px;"><span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-w
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-eight: 500; color: #3e3e3e; display: block;">Your Order ID:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##orderNo##</span> </span> <span style="width: 250px; display: inline-block; background: #ff
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-ffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Order Status:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##orderStatus
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-##</span> </span> <span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Order Date:</span> <span style="font-size: 14px
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##orderDate##</span> </span> <span style="width: 300px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; c
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-olor: #3e3e3e; display: block;">Salesman:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##salesmanNameAndPhoneNumber##</span> </span></div>  <div class="step3" style="margin: 10px 10px 0; background
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-: #ffffff; overflow: hidden; height: 43px;"><span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Customer Name</span> 
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-<span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##customerName##</span> </span> <span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margi
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-n: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Mobile Number:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##customerPhone##</span> </span> <span style="width: 500px; display: inlin
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  e-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Email Address:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%
-
-
-
-
-
-;   
-  
-  
-  
-  
-  
-  
-margin: 0;">##customerEmail##</span> </span></div>  <div class="step4" style="letter-spacing: 0; font-size: 0; margin: 10px 10px 10px; overflow: hidden; min-height: 106px;"><span style="display: inline-block; width: 99%; overflow: hidden; background: #fff
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-fff; border: 1px solid #3e3e3e;"> <span style="color: #191919; margin: 0; font-size: 14px; border-bottom: 1px solid #3e3e3e; padding: 8px 10px; display: block;">Shipping Address</span> <span style="margin: 0; font-size: 12px; line-height: 150%; padding: 1
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-0px 10px 10px; height: 60px; display: block;">##orderShippingAddress##</span> </span></div>  &nbsp; &nbsp; ##orderSetAndProductDetails##  <div style="box-sizing: border-box; width: 100%; margin: auto; overflow: hidden; color: #191919; background: #ffffff;
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
- border-top: 0; border-bottom: 0; padding: 10px 0 0; clear: both;">  <div style="text-align: center; width: 280px; height: auto; overflow: hidden; margin: auto; page-break-inside: always;">&nbsp;</div>  </div>  <div style="width: 100%; margin: auto; font-
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-family: ''Lato'', sans-serif; font-size: 14px; overflow: hidden; color: #191919; background: #ffffff; border-top: 0; padding: 10px 0 0; box-sizing: border-box;">  <div class="step10" style="padding: 0 10px; border-top: 1px solid #3e3e3e;">  <div style="te
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-xt-align: center; padding: 10px; font-weight: 500; font-size: 12px; color: #191919; letter-spacing: 0;">Powered by: <a style="white-space: nowrap; display: inline-block; text-decoration: none; color: #191919; font-weight: bold;" href="https://tanyo.in/" t
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-arget="_blank" rel="noopener"> TANYO </a></div>  </div>  </div>  </div>'
+				'<div style="width: 1200px; margin: auto; border: 1px solid #3e3e3e; background: #ebebeb; box-sizing: border-box;">
+				<div class="step1" style="box-sizing: border-box; border-bottom: 1px solid #b5b5b5;">
+				<div style="width: 85%; display: inline-block; float: left; box-sizing: border-box; height: 112px; border-right: 1px solid #b5b5b5; text-align: center;">
+				<div>
+				<h3 style="margin: 0; font-size: 22px; color: #3e3e3e; text-transform: uppercase; padding: 8px 0; border-bottom: 1px solid #b5b5b5;">##tenantName##</h3>
+				<p style="margin: 0; padding: 8px 0; border-bottom: 1px solid #b5b5b5;">##tenantAddress##</p>
+				<p style="margin: 0; padding: 8px 0;"><strong>Phone:</strong> ##phoneNumber## | <strong>Email:</strong> ##emailId## | <strong>GST:</strong> ##GSTNo##</p>
+				</div>
+				</div>
+				<div style="height: 112px; width: 15%; display: inline-block; padding: 15px 0 0; box-sizing: border-box; font-size: 0; text-align: center;"><a style="width: 80px; height: 80px; margin: auto; display: inline-block; vertical-align: middle; background: #3e3e3e; padding: 5px; border-radius: 10px; box-sizing: border-box;" href="#" target="_blank" rel="noopener"> <img style="width: 100%; height: 100%;" src="##tenantLogoPath##" alt="##tenantName##" /> </a></div>
+				</div>
+				<div class="step2" style="margin: 10px; background: #ffffff; overflow: hidden; height: 43px;"><span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Your Order ID:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##orderNo##</span> </span> <span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Order Status:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##orderStatus##</span> </span> <span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Order Date:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##orderDate##</span> </span> <span style="width: 300px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Salesman:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##salesmanNameAndPhoneNumber##</span> </span></div>
+				<div class="step3" style="margin: 10px 10px 0; background: #ffffff; overflow: hidden; height: 43px;"><span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Customer Name</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##customerName##</span> </span> <span style="width: 250px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Mobile Number:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##customerPhone##</span> </span> <span style="width: 500px; display: inline-block; background: #ffffff; padding: 5px 10px;"> <span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Email Address:</span> <span style="font-size: 14px; color: #191919; font-weight: bold; line-height: 100%; margin: 0;">##customerEmail##</span> </span></div>
+				<div class="step4" style="letter-spacing: 0px; font-size: 0px; margin: 10px 10px 0px; overflow: hidden;"><span style="display: inline-block; width: 49%; overflow: hidden; background: #ffffff; border: 1px solid #e3e3e3; vertical-align: top; min-height: 106px;"> <span style="color: #191919; margin: 0; font-size: 14px; border-bottom: 1px solid #f1f2f3; padding: 8px 10px; display: block;"> Shipping Address </span> <span style="margin: 0; font-size: 12px; line-height: 150%; padding: 10px 10px 10px; height: 60px; display: block;"> ##orderShippingAddress## </span> </span> <span style="display: inline-block; width: 49%; margin-left: 19px; overflow: hidden; background: #ffffff; border: 1px solid #e3e3e3; vertical-align: top; height: 106px;"> <span style="color: #191919; font-size: 14px; border-bottom: 1px solid #f1f2f3; padding: 8px 10px; display: block; text-align: center;"><strong> DELIVERY CHALLAN </strong></span> <span style="margin: 0; font-size: 12px; line-height: 150%; padding: 40px 10px 10px; display: block;"> <a style="margin-right: 25px;">Challan Number:____________________</a> <a>Challan Date:____________________</a> </span> </span></div>
+				&nbsp; &nbsp; ##orderSetAndProductDetails##
+				<div style="box-sizing: border-box; width: 100%; margin: auto; clear: both;">
+				<div class="step6" style="padding: 0 8px 0 10px; box-sizing: border-box; margin: 10px 0; clear: both;">
+				<div style="font-size: 0; overflow: hidden; color: #191919; box-sizing: border-box; border-bottom: 0;">
+				<div style="box-sizing: border-box; border-bottom: 0;">&nbsp;</div>
+				</div>
+				</div>
+				<div class="step7" style="padding: 0 10px;">
+				<div style="margin: 15px 0 0; font-size: 0; width: 100%; background: #ffffff; overflow: hidden; color: #191919; border: 1px solid #e3e3e3; box-sizing: border-box;">
+				<div style="box-sizing: border-box; font-size: 0;">&nbsp;</div>
+				</div>
+				</div>
+				</div>
+				<div style="box-sizing: border-box; width: 100%; margin: auto; overflow: hidden; color: #191919; background: #ebebeb; border-top: 0; border-bottom: 0; padding: 10px 0 0; clear: both;">
+				<div style="text-align: center; width: 280px; height: auto; overflow: hidden; margin: auto; page-break-inside: always;">&nbsp;</div>
+				</div>
+				<div style="padding: 10px; font-weight: 500; font-size: 12px; color: #191919; letter-spacing: 0;"><a>Supervisor Signature: ________________________</a><a style="margin-left: 80px;">Gatekeeper Signature: _______________________</a><a style="margin-left: 80px;">Customer Signature:___________________</a></div>
+				<div style="width: 100%; margin: auto; font-family: ''Lato'', sans-serif; font-size: 14px; overflow: hidden; color: #191919; background: #ebebeb; border-top: 0; padding: 10px 0 0; box-sizing: border-box;">
+				<div class="step10" style="padding: 0 10px; border-top: 1px solid #d5d5d5;">
+				<div style="text-align: center; padding: 10px; font-weight: 500; font-size: 12px; color: #191919; letter-spacing: 0;">Powered by: <a style="white-space: nowrap; display: inline-block; text-decoration: none; color: #191919; font-weight: bold;" href="https://tanyo.in/" target="_blank" rel="noopener"> TANYO ERP </a></div>
+				</div>
+				</div>
+				</div>'
 				,@TenantId
 				,@UserId
 			
@@ -4368,7 +4208,7 @@ eight: 500;">
 
 
 
- 
+
 
          </td>                                              </tr>                                      
         <tr>                          
@@ -4422,15 +4262,15 @@ eight: 500;">
 
 
 
- 
 
-                                        Unit Price                                               
+
+                                        Unit Price          
         </td>       
-        <td  style="width:15%;   text-align: center;padding-top: 5px;padding-bottom: 5px;border-left: 1px solid #b5b5b5;border-bottom: 1px solid #b5b5b5;border-top: 1px solid #b5b5b5; width: 15%;font-size: 12px; background-color: #dfdfdf;">               
+        <td  style="width:15%;   text-align: center;padding-top: 5px;padding-bottom: 5px;border-left: 1px solid #b5b5b5;border-bottom: 1px solid #b5b5b5;border-top: 1px solid #b5b5b5; width: 15%;font-size: 12px; background-color: #dfdfdf;">              
 
 
 
-
+ 
 
                                        Quantity                               
         </td>                    
@@ -4506,14 +4346,14 @@ x;">                                                      Cost Price
 
 
 
-                     <tr>                                                   
+                     <tr>                                    
         <td  style="width: 70%; padding-top: 5px;padding-left: 10px;padding-bottom: 5px;border-bottom: 1px solid #b5b5b5;border-top: 1px solid #b5b5b5; font-size: 12px;background-color: #dfdfdf;">         
         Labour Charges  </td>       
-        <td    style="width: 30%;text-align: right;padding-top: 5px;padding-bottom: 5px;border-left: 1px solid #b5b5b5;border-bottom: 1px solid #b5b5b5;border-top: 1px solid #b5b5b5;font-size: 12px;background-color: #dfdfdf;padding-right: 10px;">         
+        <td    style="width: 30%;text-align: right;padding-top: 5px;padding-bottom: 5px;border-left: 1px solid #b5b5b5;border-bottom: 1px solid #b5b5b5;border-top: 1px solid #b5b5b5;font-size: 12px;background-color: #dfdfdf;padding-right: 10px;">        
 
 
 
-
+ 
 
                                              Amount                                         
         </td>   
@@ -4593,17 +4433,18 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 0;margin:5px 0 0">Tanyo Team</p></div></div></body></html>'
 				,@TenantId
 				,@UserId
-
-				UNION ALL
-
-				SELECT (
+			
+			UNION ALL
+			
+			SELECT (
 					SELECT TOP 1 ec1.EmailCMSID
 					FROM EmailCMS ec1
 					WHERE ec1.KeyName = 'Stock Transfer PDF'
 						AND ec1.TenantID = @TenantId
 					)
 				,'Stock Transfer PDF'
-				,'<div style="width: 1200px; margin: auto; border: 1px solid #3e3e3e; background: #ebebeb; box-sizing: border-box;">  <div style="box-sizing: border-box; border-bottom: 1px solid #b5b5b5; overflow: hidden;">  <div style="width: 85%; float: left; box-sizing: border-box; height: 112px; border-right: 1px solid #b5b5b5; text-align: center;">  <h3 style="margin: 0; font-size: 22px; color: #3e3e3e; text-transform: uppercase; padding: 8px 0; border-bottom: 1px solid #b5b5b5;">##tenantName##</h3>  <p style="margin: 0; padding: 8px 0; border-bottom: 1px solid #b5b5b5;">##tenantAddress##</p>  <p style="margin: 0; padding: 8px 0;"><strong>Phone:</strong> ##tenantPhone## | <strong>Email:</strong> ##tenantEmail## | <strong>GST:</strong> ##tenantGSTNo##</p>  </div>  <div style="width: 15%; float: left; height: 112px; padding: 15px 0 0; box-sizing: border-box; text-align: center;">##tenantLogoHtml##</div>  </div>  <div style="margin: 10px; overflow: hidden; border: 1px solid #b5b5b5; box-sizing: border-box;">  <div style="background: #ffffff; box-sizing: border-box; overflow: hidden; font-size: 0;"><span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; border-right: 1px solid #b5b5b5; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Transfer Date:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##transferDate##</span></span> <span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; border-right: 1px solid #b5b5b5; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Transferred By:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##transferredBy##</span></span> <span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; border-right: 1px solid #b5b5b5; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">From Warehouse:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##fromWarehouse##</span></span> <span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">To Warehouse:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##toWarehouse##</span></span></div>  </div>  <div style="margin: 0 10px 10px; overflow: hidden;">  <table style="width: 100%; background: #ffffff; border: 1px solid #b5b5b5; border-collapse: collapse; box-sizing: border-box;">  <tbody>  <tr>  <td style="padding: 8px 12px; font-size: 14px; color: #191919; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; width: 35%; text-align: left; vertical-align: middle;">Stock Transfer Challan</td>  <td style="padding: 8px 12px; font-size: 14px; color: #191919; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; width: 35%; text-align: center; vertical-align: middle;">Stock Transfer No: ##stockTransferNo##</td>  <td style="padding: 8px 12px; width: 30%;">&nbsp;</td>  </tr>  </tbody>  </table>  </div>  ##productTable##  <div style="clear: both; margin: 10px 10px 0; overflow: hidden;">  <div style="background: #ffffff; border: 1px solid #b5b5b5; box-sizing: border-box; min-height: 80px;">  <div style="font-size: 13px; color: #191919; font-weight: 500; padding: 8px 12px; border-bottom: 1px solid #e3e3e3;">Remarks / Notes</div>  <div style="font-size: 13px; color: #191919; line-height: 170%; padding: 10px 12px; min-height: 50px;">##remarks##</div>  </div>  </div>  <div style="clear: both; margin: 8px 10px 0; overflow: hidden; text-align: right;"><span style="display: inline-block; font-size: 12px; font-weight: 500; color: #191919; letter-spacing: 0; padding: 6px 0;">Authorized Signature: ________________________</span></div>  <div style="clear: both; height: 6px;">&nbsp;</div>  <div style="border-top: 1px solid #d5d5d5; clear: both;">  <div style="text-align: center; padding: 10px; font-weight: 500; font-size: 12px; color: #191919; letter-spacing: 0;">Powered by: <a style="white-space: nowrap; display: inline-block; text-decoration: none; color: #191919; font-weight: bold;" href="https://tanyo.in/" target="_blank" rel="noopener">TANYO ERP</a></div>  </div>  </div>  <p>```</p>'
+				,
+				'<div style="width: 1200px; margin: auto; border: 1px solid #3e3e3e; background: #ebebeb; box-sizing: border-box;">  <div style="box-sizing: border-box; border-bottom: 1px solid #b5b5b5; overflow: hidden;">  <div style="width: 85%; float: left; box-sizing: border-box; height: 112px; border-right: 1px solid #b5b5b5; text-align: center;">  <h3 style="margin: 0; font-size: 22px; color: #3e3e3e; text-transform: uppercase; padding: 8px 0; border-bottom: 1px solid #b5b5b5;">##tenantName##</h3>  <p style="margin: 0; padding: 8px 0; border-bottom: 1px solid #b5b5b5;">##tenantAddress##</p>  <p style="margin: 0; padding: 8px 0;"><strong>Phone:</strong> ##tenantPhone## | <strong>Email:</strong> ##tenantEmail## | <strong>GST:</strong> ##tenantGSTNo##</p>  </div>  <div style="width: 15%; float: left; height: 112px; padding: 15px 0 0; box-sizing: border-box; text-align: center;">##tenantLogoHtml##</div>  </div>  <div style="margin: 10px; overflow: hidden; border: 1px solid #b5b5b5; box-sizing: border-box;">  <div style="background: #ffffff; box-sizing: border-box; overflow: hidden; font-size: 0;"><span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; border-right: 1px solid #b5b5b5; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Transfer Date:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##transferDate##</span></span> <span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; border-right: 1px solid #b5b5b5; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">Transferred By:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##transferredBy##</span></span> <span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; border-right: 1px solid #b5b5b5; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">From Warehouse:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##fromWarehouse##</span></span> <span style="width: 25%; display: inline-block; background: #ffffff; padding: 8px 14px; vertical-align: top; box-sizing: border-box;"><span style="font-size: 12px; margin: 0 0 4px; font-weight: 500; color: #3e3e3e; display: block;">To Warehouse:</span><span style="font-size: 14px; color: #191919; font-weight: bold; display: block;">##toWarehouse##</span></span></div>  </div>  <div style="margin: 0 10px 10px; overflow: hidden;">  <table style="width: 100%; background: #ffffff; border: 1px solid #b5b5b5; border-collapse: collapse; box-sizing: border-box;">  <tbody>  <tr>  <td style="padding: 8px 12px; font-size: 14px; color: #191919; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; width: 35%; text-align: left; vertical-align: middle;">Stock Transfer Challan</td>  <td style="padding: 8px 12px; font-size: 14px; color: #191919; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; width: 35%; text-align: center; vertical-align: middle;">Stock Transfer No: ##stockTransferNo##</td>  <td style="padding: 8px 12px; width: 30%;">&nbsp;</td>  </tr>  </tbody>  </table>  </div>  ##productTable##  <div style="clear: both; margin: 10px 10px 0; overflow: hidden;">  <div style="background: #ffffff; border: 1px solid #b5b5b5; box-sizing: border-box; min-height: 80px;">  <div style="font-size: 13px; color: #191919; font-weight: 500; padding: 8px 12px; border-bottom: 1px solid #e3e3e3;">Remarks / Notes</div>  <div style="font-size: 13px; color: #191919; line-height: 170%; padding: 10px 12px; min-height: 50px;">##remarks##</div>  </div>  </div>  <div style="clear: both; margin: 8px 10px 0; overflow: hidden; text-align: right;"><span style="display: inline-block; font-size: 12px; font-weight: 500; color: #191919; letter-spacing: 0; padding: 6px 0;">Authorized Signature: ________________________</span></div>  <div style="clear: both; height: 6px;">&nbsp;</div>  <div style="border-top: 1px solid #d5d5d5; clear: both;">  <div style="text-align: center; padding: 10px; font-weight: 500; font-size: 12px; color: #191919; letter-spacing: 0;">Powered by: <a style="white-space: nowrap; display: inline-block; text-decoration: none; color: #191919; font-weight: bold;" href="https://tanyo.in/" target="_blank" rel="noopener">TANYO ERP</a></div>  </div>  </div>  <p>```</p>'
 				,@TenantId
 				,@UserId
 
@@ -4825,7 +4666,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 
 			DECLARE @LookupId BIGINT
 
-			SELECT TOP (1) @LookupId = LookupId
+			SELECT @LookupId = LookupId
 			FROM Lookups
 			WHERE TenantId = @TenantId
 				AND LookupName = 'Unit'
@@ -4878,7 +4719,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 
 			SELECT @LookupId = 0
 
-			SELECT TOP (1) @LookupId = LookupId
+			SELECT @LookupId = LookupId
 			FROM Lookups
 			WHERE TenantId = @TenantId
 				AND LookupName = 'InquiryClosingReasons'
@@ -4915,16 +4756,16 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			SELECT @LookupId
 				,'Quality not good'
 				,1
-
+			
 			UNION ALL
 			
 			SELECT @LookupId
 				,'Inquiry has been created'
 				,1
-			
+
 			SELECT @LookupId = 0
 
-			SELECT TOP (1) @LookupId = LookupId
+			SELECT @LookupId = LookupId
 			FROM Lookups
 			WHERE TenantId = @TenantId
 				AND LookupName = 'BackInquiryClosingReasons'
@@ -4976,7 +4817,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 
 			SELECT @LookupId = 0
 
-			SELECT TOP (1) @LookupId = LookupId
+			SELECT @LookupId = LookupId
 			FROM Lookups
 			WHERE TenantId = @TenantId
 				AND LookupName = 'Profession'
@@ -5120,7 +4961,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 
 			SELECT @LookupId = 0
 
-			SELECT TOP (1) @LookupId = LookupId
+			SELECT @LookupId = LookupId
 			FROM Lookups
 			WHERE TenantId = @TenantId
 				AND LookupName = 'PurchaseUrgency'
@@ -5145,7 +4986,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			SELECT @LookupId
 				,'This Month'
 				,1
-
+			
 			UNION ALL
 			
 			SELECT @LookupId
@@ -5154,7 +4995,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 
 			SELECT @LookupId = 0
 
-			SELECT TOP (1) @LookupId = LookupId
+			SELECT @LookupId = LookupId
 			FROM Lookups
 			WHERE TenantId = @TenantId
 				AND LookupName = 'CustomerBehavior'
@@ -5179,34 +5020,34 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			SELECT @LookupId
 				,'Serious buyer'
 				,1
-
+			
 			UNION ALL
 			
 			SELECT @LookupId
 				,'Needs family approval'
 				,1
-
+			
 			UNION ALL
 			
 			SELECT @LookupId
 				,'Needs Architect approval'
 				,1
-
+			
 			UNION ALL
 			
 			SELECT @LookupId
 				,'Confused but trying'
 				,1
-
+			
 			UNION ALL
 			
 			SELECT @LookupId
 				,'Revisit planned'
 				,1
-			
+
 			SELECT @LookupId = 0
 
-			SELECT TOP (1) @LookupId = LookupId
+			SELECT @LookupId = LookupId
 			FROM Lookups
 			WHERE TenantId = @TenantId
 				AND LookupName = 'BuyingRange'
@@ -5231,7 +5072,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			SELECT @LookupId
 				,'₹50,000 – ₹1,00,000'
 				,1
-				
+			
 			UNION ALL
 			
 			SELECT @LookupId
@@ -5242,6 +5083,22 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			
 			SELECT @LookupId
 				,'Above ₹5,00,000'
+				,1
+
+			SELECT @LookupId = 0
+
+			SELECT @LookupId = LookupId
+			FROM Lookups
+			WHERE TenantId = @TenantId
+				AND LookupName = 'ProductCustomLabel'
+
+			INSERT INTO LookupValues (
+				LookupId
+				,LookupValueName
+				,CreatedBy
+				)
+			SELECT @LookupId
+				,'Warranty'
 				,1
 
 			PRINT 'LookupValues Created Successfully'
@@ -5300,17 +5157,17 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			SELECT 'PROCUST'
 				,'PROCUST'
 				,(
-					SELECT TOP (1) CompanyId
+					SELECT CompanyId
 					FROM Companies
 					WHERE CompanyName = 'PROCUST'
 						AND TenantId = @TenantId
 					)
 				,(
-					SELECT TOP (1) LookupValueId
+					SELECT LookupValueId
 					FROM LookupValues
 					WHERE LookupValueName = 'meter'
 						AND LookupId = (
-							SELECT TOP (1) LookupId
+							SELECT LookupId
 							FROM Lookups
 							WHERE TenantId = @TenantId
 								AND LookupName = 'Unit'
@@ -5337,13 +5194,13 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			SELECT 'PU Matt with Mixing'
 				,'PUMMAX'
 				,(
-					SELECT TOP (1) CompanyId
+					SELECT CompanyId
 					FROM Companies
 					WHERE TenantId = @TenantId
 						AND CompanyName = 'Asian Paint'
 					)
 				,(
-					SELECT TOP (1) LookupValueId
+					SELECT LookupValueId
 					FROM LookupValues lv
 					INNER JOIN Lookups l ON l.LookupId = lv.LookupId
 					WHERE l.TenantId = @TenantId
@@ -5358,13 +5215,13 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			SELECT 'PU Sealer Mixing'
 				,'PUSMIX'
 				,(
-					SELECT TOP (1) CompanyId
+					SELECT CompanyId
 					FROM Companies
 					WHERE TenantId = @TenantId
 						AND CompanyName = 'Asian Paint'
 					)
 				,(
-					SELECT TOP (1) LookupValueId
+					SELECT LookupValueId
 					FROM LookupValues lv
 					INNER JOIN Lookups l ON l.LookupId = lv.LookupId
 					WHERE l.TenantId = @TenantId
@@ -5385,7 +5242,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 				)
 			SELECT 'ASH WOOD'
 				,(
-					SELECT TOP (1) LookupValueId
+					SELECT LookupValueId
 					FROM LookupValues lv
 					INNER JOIN Lookups l ON l.LookupId = lv.LookupId
 					WHERE l.TenantId = @TenantId
@@ -5399,7 +5256,7 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 			
 			SELECT 'TEAK WOOD'
 				,(
-					SELECT TOP (1) LookupValueId
+					SELECT LookupValueId
 					FROM LookupValues lv
 					INNER JOIN Lookups l ON l.LookupId = lv.LookupId
 					WHERE l.TenantId = @TenantId
@@ -5951,26 +5808,23 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 				,@UserId
 				,1
 
-
-            INSERT INTO [dbo].[TenantInvoiceFormatMapping](
-			 [TenantId]
-			,[InvoiceFormatId]
-			,[TermsAndConditionsHtml]
-			,[CreatedBy]
-			,[CreatedDate]
-			,[CreatedUTCDate]
-			)
-			SELECT TOP 1 
-			 @TenantId
-			,InvoiceFormatId
-			,'<p style="font-size: 13px; margin: 0; padding: 3px 10px; font-weight: 600; border-bottom: 2px solid #f1f2f3;">Terms and Conditions comes here..</p>
+			INSERT INTO [dbo].[TenantInvoiceFormatMapping] (
+				[TenantId]
+				,[InvoiceFormatId]
+				,[TermsAndConditionsHtml]
+				,[CreatedBy]
+				,[CreatedDate]
+				,[CreatedUTCDate]
+				)
+			SELECT TOP 1 @TenantId
+				,InvoiceFormatId
+				,'<p style="font-size: 13px; margin: 0; padding: 3px 10px; font-weight: 600; border-bottom: 2px solid #f1f2f3;">Terms and Conditions comes here..</p>
 				 <p style="font-size: 13px; margin: 0; padding: 3px 10px; font-weight: 600; border-bottom: 2px solid #f1f2f3;">Terms and Conditions comes here..</p>
 				 <p style="font-size: 13px; margin: 0; padding: 3px 10px; font-weight: 600; border-bottom: 2px solid #f1f2f3;">Terms and Conditions comes here..</p>'
-			,@UserId
-			,@DateOffset
-			,@DateUTC
+				,@UserId
+				,@DateOffset
+				,@DateUTC
 			FROM InvoiceFormat
-
 
 			INSERT INTO [dbo].[TenantAppVersion] (
 				[TenantId]
@@ -5982,9 +5836,8 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 				,[LastModifiedDate]
 				,[LastModifiedUTCDate]
 				)
-			SELECT TOP 1
-				@TenantId
-				,'All'	
+			SELECT TOP 1 @TenantId
+				,'All'
 				,[AppVersion]
 				,[IsForceUpdate]
 				,[IsMaintenance]
@@ -5992,8 +5845,8 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 				,@DateOffset
 				,@DateUTC
 			FROM TenantAppVersion
-				WHERE [DeviceType] = 'All'
-			ORDER BY TenantAppVersionId desc
+			WHERE [DeviceType] = 'All'
+			ORDER BY TenantAppVersionId DESC
 		END
 
 		--ELSE  
@@ -6010,15 +5863,17 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 	BEGIN CATCH
 		IF @@TRANCOUNT > 0
 			ROLLBACK TRAN SaveTenant
-		
+
 		DECLARE @ObjectName VARCHAR(500)
-		,@ErrorMsg VARCHAR(MAX);
+			,@ErrorMsg VARCHAR(MAX);
 
 		SET @ObjectName = OBJECT_NAME(@@PROCID);
 		SET @ErrorMsg = ERROR_MESSAGE();
 
 		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
 			,@ErrorMsg = @ErrorMsg;
-		
 	END CATCH
 END
+
+GO
+

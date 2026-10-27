@@ -13,7 +13,7 @@ CREATE PROCEDURE [dbo].[SaveCustomerDetails] (
 	,@ParentCustomerId BIGINT
 	,@CustomerFirstName VARCHAR(50)
 	,@CustomerLastName VARCHAR(50)
-	,@CustomerPhoneNumber VARCHAR(10) = NULL
+	,@CustomerPhoneNumber VARCHAR(16) = NULL
 	,@UserID INT
 	)
 WITH ENCRYPTION

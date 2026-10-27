@@ -2,7 +2,7 @@ CREATE TABLE [dbo].[Leads] (
     [LeadId]                  BIGINT             IDENTITY (1, 1) NOT NULL,
     [FirstName]               VARCHAR (50)       NOT NULL,
     [LastName]                VARCHAR (50)       NULL,
-    [PhoneNumber]             VARCHAR (10)       NULL,
+    [PhoneNumber]             VARCHAR (16)       NULL,
     [Notes]                   NVARCHAR (MAX)     NULL,
     [Source]                  INT                NOT NULL,
     [Email]                   VARCHAR (100)      NULL,
@@ -31,11 +31,14 @@ CREATE TABLE [dbo].[Leads] (
     [CustomerBehaviorId]      BIGINT             NULL,
     [BuyingRangeValueId]      BIGINT             NULL,
     [LeadType]                INT                CONSTRAINT [DF_Leads_LeadType] DEFAULT ((0)) NULL,
-    [AlternateMobileNumber]   VARCHAR (15)       NULL,
+    [AlternateMobileNumber]   VARCHAR (16)       NULL,
     [InquiryAreaRequirement]  DECIMAL (18, 2)    NULL,
     [AlternateSalesmanId]     BIGINT             NULL,
     [ClientMeetingStageId]    INT                NULL,
     [ArchitectMeetingStageId] INT                NULL,
+    [ArchitectBehaviorId]     BIGINT             NULL,
+    [CompanyName]             VARCHAR (200)      NULL,
+    [VisitForId]              BIGINT             NULL,
     CONSTRAINT [PK__Leads__73EF78FA3F0F5F65] PRIMARY KEY CLUSTERED ([LeadId] ASC) WITH (FILLFACTOR = 80)
 );
 

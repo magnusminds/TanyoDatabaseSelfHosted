@@ -253,6 +253,32 @@ BEGIN
 						THEN 'Upcoming'
 					ELSE 'Remaining'
 					END = @ModuleName
+				OR (
+					@ModuleName = 'FieldPipeline'
+					AND ISNULL(l.LeadType, 0) = 0
+					AND u.FieldStoreOperationType = 1
+					)
+				OR (
+					@ModuleName = 'SalesPipeline'
+					AND ISNULL(l.LeadType, 0) = 0
+					AND u.FieldStoreOperationType IN (
+						2
+						,3
+						)
+					)
+				OR (
+					@ModuleName = 'ArchitectsVisit-Store'
+					AND ISNULL(l.LeadType, 0) = 1
+					AND u.FieldStoreOperationType IN (
+						2
+						,3
+						)
+					)
+				OR (
+					@ModuleName = 'ArchitectsVisit-Field'
+					AND ISNULL(l.LeadType, 0) = 1
+					AND u.FieldStoreOperationType = 1
+					)
 				)
 		ORDER BY CASE 
 				WHEN @SortBy = 'Priority'
@@ -374,10 +400,9 @@ BEGIN
 					AND @SortOrder = 'DESC'
 					THEN ISNULL(l.UpdatedDate, l.CreatedDate)
 				END DESC
-			,l.CreatedDate DESC 
-			
-			OFFSET(@PageIndex - 1) * @PageSize ROWS
-			FETCH NEXT @PageSize ROWS ONLY;
+			,l.CreatedDate DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
+
+		FETCH NEXT @PageSize ROWS ONLY;
 
 		DROP TABLE #UserLocations;
 	END TRY

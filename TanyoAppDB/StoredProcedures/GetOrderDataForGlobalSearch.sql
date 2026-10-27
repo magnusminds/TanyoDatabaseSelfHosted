@@ -1,7 +1,8 @@
-/*
-  EXEC [dbo].[GetOrderDataForGlobalSearch]
-    @SearchText = 'test',
-    @TenantID = 1207
+
+/*  
+  EXEC [dbo].[GetOrderDataForGlobalSearch]  
+    @SearchText = 'test',  
+    @TenantID = 1207  
 */
 CREATE PROCEDURE [dbo].[GetOrderDataForGlobalSearch] (
 	@SearchText VARCHAR(200)
@@ -47,6 +48,7 @@ BEGIN
 			AND os.TenantId = @TenantID
 		WHERE o.TenantId = @TenantID
 			AND os.Type = 'Order'
+			AND o.Status <> 9
 			AND (
 				o.OrderNo LIKE '%' + @SearchText + '%'
 				OR c.PhoneNumber LIKE '%' + @SearchText + '%'
@@ -62,7 +64,6 @@ BEGIN
 	END TRY
 
 	BEGIN CATCH
-
 		DECLARE @ObjectName VARCHAR(500)
 			,@ErrorMsg NVARCHAR(4000);
 

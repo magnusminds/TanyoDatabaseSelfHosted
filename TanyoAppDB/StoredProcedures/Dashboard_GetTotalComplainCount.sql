@@ -17,7 +17,7 @@ EXEC Dashboard_GetTotalComplainCount
  @RoleId = '17BE52F0-731D-4215-9CA3-021C068A9F6F'
 */
 CREATE PROCEDURE [dbo].[Dashboard_GetTotalComplainCount] 
-     @TenantId INT
+	 @TenantId INT
 	,@CurrentUserId INT
 	,@RoleId NVARCHAR(100)
 WITH ENCRYPTION
@@ -50,7 +50,10 @@ BEGIN
 				SELECT 1
 				FROM AspNetRoleClaims
 				WHERE RoleId = @RoleId
-					AND [ClaimValue] = 'Permissions.App.Order.WholeselerPrice'
+					AND [ClaimValue] IN (
+						'Permissions.App.Order.WholeselerPrice'
+						,'Permissions.General.Order.WholeselerPrice'
+						)
 				)
 			SET @IsWholesaler = 1;
 

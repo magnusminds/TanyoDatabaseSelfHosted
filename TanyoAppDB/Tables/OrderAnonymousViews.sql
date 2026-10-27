@@ -3,7 +3,7 @@ CREATE TABLE [dbo].[OrderAnonymousViews] (
     [OrderId]              BIGINT             NOT NULL,
     [CustomerId]           BIGINT             NOT NULL,
     [IPAddress]            VARCHAR (50)       NOT NULL,
-    [CreatedDate]          DATETIMEOFFSET (7) CONSTRAINT [DF_OrderAnonymousViews_CreatedDate] DEFAULT (sysdatetimeoffset()) NOT NULL,
+    [CreatedDate]          DATETIMEOFFSET (7) CONSTRAINT [DF__OrderAnon__Creat__6DEC4894] DEFAULT (sysdatetimeoffset()) NOT NULL,
     [CreatedUTCDate]       DATETIME           DEFAULT (getutcdate()) NULL,
     [BrowserName]          VARCHAR (1000)     DEFAULT (NULL) NULL,
     PRIMARY KEY CLUSTERED ([OrderAnonymousViewId] ASC) WITH (FILLFACTOR = 80)

@@ -1,10 +1,10 @@
-/*
-EXEC [dbo].[GetProductsByCategoryAndTenant]
-	@TenantId = 2,
-    @CategoryId = 10704,
-    @hosturl = 'https://localhost:7253',	
-	@PageIndex = 1,
-	@PageSize = 50
+/*  
+EXEC [dbo].[GetProductsByCategoryAndTenant]  
+ @TenantId = 2,  
+    @CategoryId = 10704,  
+    @hosturl = 'https://localhost:7253',   
+ @PageIndex = 1,  
+ @PageSize = 50  
 */
 CREATE PROCEDURE [dbo].[GetProductsByCategoryAndTenant] (
 	@TenantId INT
@@ -42,6 +42,25 @@ BEGIN
 			,ISNULL(p.CoverImage, @hosturl + '/images/No-coverimage.png') AS ProductCoverImage
 			,ISNULL(tf.OrganizationType, 'Furniture') AS TenantOrganizationType
 			,pq.Quantity AS InStock
+			,p.ProductBrandId
+			,p.ProductColourId
+			,p.ProductMaterialId
+			,p.CategoryId AS SubCategoryId
+			,CASE 
+				WHEN EXISTS (
+						SELECT 1
+						FROM OfferProductMapping opm WITH (NOLOCK)
+						WHERE opm.ProductId = p.ProductId
+						)
+					THEN 1
+				ELSE 0
+				END AS HasOffer
+			,(
+				SELECT TOP 1 pm.ImageColorCode
+				FROM ProductImages pm WITH (NOLOCK)
+				WHERE pm.ProductId = p.ProductId
+					AND pm.IsCover = 1
+				) AS ImageColorCode
 			,COUNT(1) OVER (PARTITION BY 1) AS TotalCount
 		FROM Categories c WITH (NOLOCK)
 		INNER JOIN Products p WITH (NOLOCK) ON c.CategoryId = p.CategoryId
@@ -52,7 +71,7 @@ BEGIN
 				c.CategoryId = @CategoryId
 				OR C.ParentCategoryId = @CategoryId
 				)
-			AND p.STATUS = 1
+			AND p.Status = 1
 			AND c.TenantId = @TenantId
 		ORDER BY p.ProductId OFFSET(@PageIndex - 1) * @PageSize ROWS
 
@@ -68,7 +87,7 @@ BEGIN
 		SELECT @ErrorMessage = ERROR_MESSAGE()
 			,@ErrorSeverity = ERROR_SEVERITY()
 			,@ErrorState = ERROR_STATE()
-			,@ObjectName = OBJECT_NAME(@@SPID)
+			,@ObjectName = OBJECT_NAME(@@PROCID)
 
 		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
 			,@ErrorMsg = @ErrorMessage

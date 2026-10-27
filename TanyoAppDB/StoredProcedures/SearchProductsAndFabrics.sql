@@ -24,7 +24,10 @@ BEGIN
 				SELECT 1
 				FROM AspNetRoleClaims
 				WHERE RoleId = @RoleId
-					AND ClaimValue = 'Permissions.App.Order.WholeselerPrice'
+					AND ClaimValue IN (
+						'Permissions.App.Order.WholeselerPrice'
+						,'Permissions.General.Order.WholeselerPrice'
+						)
 				)
 			SET @HasWholesalerPermission = 1
 
@@ -41,6 +44,7 @@ BEGIN
 						THEN 1
 					ELSE 0
 					END AS BIT) AS IsFabric
+			,PT.CoverImage AS CoverImage
 		FROM Products PT WITH (NOLOCK)
 		INNER JOIN Categories CT WITH (NOLOCK) ON PT.CategoryId = CT.CategoryId
 		INNER JOIN SubjectTypes ST WITH (NOLOCK) ON ST.TenantId = PT.TenantId
@@ -86,7 +90,6 @@ BEGIN
 		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
 			,@ErrorMsg = @ErrorMsg;
 	END CATCH
-
 END;
 
 GO

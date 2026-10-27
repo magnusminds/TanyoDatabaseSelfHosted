@@ -1,7 +1,7 @@
 CREATE TABLE [dbo].[Contractor] (
     [ContractorId]   INT                IDENTITY (1, 1) NOT NULL,
     [ContractorName] VARCHAR (50)       NOT NULL,
-    [PhoneNumber]    VARCHAR (10)       NOT NULL,
+    [PhoneNumber]    VARCHAR (16)       NOT NULL,
     [IMEI]           VARCHAR (15)       NOT NULL,
     [EmailId]        VARCHAR (50)       NOT NULL,
     [TenantId]       INT                NULL,

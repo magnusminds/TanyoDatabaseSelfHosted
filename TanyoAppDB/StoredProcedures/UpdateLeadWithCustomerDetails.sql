@@ -41,6 +41,9 @@ BEGIN
 		,@RefferedBy BIGINT
 		,@PurchaseUrgencyId BIGINT
 		,@CustomerBehaviorId BIGINT
+		,@ArchitectBehaviorId BIGINT
+		,@VisitForId BIGINT
+		,@CompanyName NVARCHAR(200)
 		,@CloseLookupValueId INT
 		,@ReturnMessage VARCHAR(1024) = ''
 		,@ExistingPhoneNumber VARCHAR(50)
@@ -61,7 +64,8 @@ BEGIN
 		,@FirstName = JSON_VALUE(@LeadRequestDetails, '$.customerDetails.firstName')
 		,@LastName = JSON_VALUE(@LeadRequestDetails, '$.customerDetails.lastName')
 		,@PhoneNumber = JSON_VALUE(@LeadRequestDetails, '$.customerDetails.phoneNumber')
-		,@Email = JSON_VALUE(@LeadRequestDetails, '$.customerDetails.emailId');
+		,@Email = JSON_VALUE(@LeadRequestDetails, '$.customerDetails.emailId')
+		,@CompanyName = COALESCE(NULLIF(JSON_VALUE(@LeadRequestDetails, '$.leadDetails.companyName'), ''), JSON_VALUE(@LeadRequestDetails, '$.customerDetails.companyName'));
 
 	SELECT @CustomerAddressId = JSON_VALUE(@LeadRequestDetails, '$.customerAddress.customerAddressId')
 		,@AddrCustomerId = JSON_VALUE(@LeadRequestDetails, '$.customerAddress.customerId')
@@ -98,7 +102,9 @@ BEGIN
 		,@AlternateSalesmanId = JSON_VALUE(@LeadRequestDetails, '$.leadDetails.alternateSalesmanId')
 		,@ClientMeetingStageId = JSON_VALUE(@LeadRequestDetails, '$.leadDetails.clientMeetingStageId')
 		,@ArchitectMeetingStageId = JSON_VALUE(@LeadRequestDetails, '$.leadDetails.architectMeetingStageId')
-		,@LeadType = JSON_VALUE(@LeadRequestDetails, '$.leadDetails.leadType');
+		,@LeadType = JSON_VALUE(@LeadRequestDetails, '$.leadDetails.leadType')
+		,@ArchitectBehaviorId = JSON_VALUE(@LeadRequestDetails, '$.leadDetails.architectBehaviorId')
+		,@VisitForId = JSON_VALUE(@LeadRequestDetails, '$.leadDetails.visitForId');
 
 	IF JSON_QUERY(@LeadRequestDetails, '$.customerAddress') IS NULL
 		OR JSON_QUERY(@LeadRequestDetails, '$.customerAddress') = '{}'
@@ -124,7 +130,7 @@ BEGIN
 			,1;
 	END
 
-	-- Verify lead exists and belongs to this tenant  
+	-- Verify lead exists and belongs to this tenant    
 	IF NOT EXISTS (
 			SELECT 1
 			FROM Leads WITH (NOLOCK)
@@ -165,7 +171,7 @@ BEGIN
 	BEGIN TRY
 		IF ISNULL(@CustomerId, 0) = 0
 		BEGIN
-			-- Phone must be unique within tenant  
+			-- Phone must be unique within tenant    
 			IF EXISTS (
 					SELECT 1
 					FROM Customers WITH (NOLOCK)
@@ -185,8 +191,6 @@ BEGIN
 				FROM Customers WITH (NOLOCK)
 				WHERE CustomerId = @CustomerId
 					AND TenantId = @TenantId
-					--SET @ReturnMessage = 'A customer with this phone number already exists.';  
-					--THROW 50001,@ReturnMessage,1;  
 			END
 			ELSE
 			BEGIN
@@ -202,6 +206,7 @@ BEGIN
 					,FirstName
 					,LastName
 					,EmailId
+					,CompanyName
 					,PhoneNumber
 					,RefferedBy
 					,TenantId
@@ -211,10 +216,15 @@ BEGIN
 					,CreatedUTCDate
 					,LocationID
 					)
-				SELECT 1
+				SELECT CASE 
+						WHEN ISNULL(@LeadType, 0) = 1
+							THEN 2
+						ELSE 1
+						END
 					,@FirstName
 					,ISNULL(@LastName, '')
 					,@Email
+					,@CompanyName
 					,@PhoneNumber
 					,@RefferedBy
 					,@TenantId
@@ -250,14 +260,12 @@ BEGIN
 				WHERE CustomerId = @CustomerId
 					AND TenantId = @TenantId
 
-				--AND IsDeleted = 0;  
 				IF @PhoneNumber <> @ExistingPhoneNumber
 					AND EXISTS (
 						SELECT 1
 						FROM Customers WITH (NOLOCK)
 						WHERE PhoneNumber = @PhoneNumber
 							AND TenantId = @TenantId
-							--AND IsDeleted = 0  
 							AND CustomerId <> @CustomerId
 						)
 				BEGIN
@@ -268,7 +276,7 @@ BEGIN
 						,1;
 				END
 
-				-- Update customer details  
+				-- Update customer details    
 				UPDATE Customers
 				SET FirstName = @FirstName
 					,LastName = ISNULL(@LastName, '')
@@ -281,7 +289,6 @@ BEGIN
 					,IsDeleted = 0
 				WHERE CustomerId = @CustomerId
 					AND TenantId = @TenantId
-					--AND IsDeleted = 0;  
 			END
 			ELSE
 			BEGIN
@@ -310,14 +317,12 @@ BEGIN
 				WHERE CustomerId = @CustomerId
 					AND TenantId = @TenantId
 
-				--AND IsDeleted = 0;  
 				IF @PhoneNumber <> @ExistingPhoneNumber
 					AND EXISTS (
 						SELECT 1
 						FROM Customers WITH (NOLOCK)
 						WHERE PhoneNumber = @PhoneNumber
 							AND TenantId = @TenantId
-							--AND IsDeleted = 0  
 							AND CustomerId <> @CustomerId
 						)
 				BEGIN
@@ -328,7 +333,7 @@ BEGIN
 						,1;
 				END
 
-				-- Update customer details  
+				-- Update customer details    
 				UPDATE Customers
 				SET FirstName = @FirstName
 					,LastName = ISNULL(@LastName, '')
@@ -343,6 +348,23 @@ BEGIN
 			END
 		END
 
+		-- Keep the customer type in sync with the lead type
+		DECLARE @TargetCustomerTypeId INT = CASE 
+				WHEN ISNULL(@LeadType, 0) = 1
+					THEN 2
+				ELSE 1
+				END;
+
+		UPDATE Customers
+		SET CustomerTypeId = @TargetCustomerTypeId
+			,UpdatedBy = @UserId
+			,UpdatedDate = @dt
+			,UpdatedUTCDate = @dtUTC
+		WHERE CustomerId = @CustomerId
+			AND TenantId = @TenantId
+			AND CustomerTypeId IN (1, 2)
+			AND CustomerTypeId <> @TargetCustomerTypeId;
+
 		SELECT @FirstName = FirstName
 			,@LastName = LastName
 			,@PhoneNumber = PhoneNumber
@@ -350,6 +372,24 @@ BEGIN
 		FROM Customers WITH (NOLOCK)
 		WHERE CustomerId = @CustomerId
 			AND TenantId = @TenantId
+
+		IF NULLIF(TRIM(@CompanyName), '') IS NOT NULL
+			AND EXISTS (
+				SELECT 1
+				FROM Customers WITH (NOLOCK)
+				WHERE CustomerId = @CustomerId
+					AND TenantId = @TenantId
+					AND ISNULL(CompanyName, '') <> @CompanyName
+				)
+		BEGIN
+			UPDATE Customers
+			SET CompanyName = @CompanyName
+				,UpdatedBy = @UserId
+				,UpdatedDate = @dt
+				,UpdatedUTCDate = @dtUTC
+			WHERE CustomerId = @CustomerId
+				AND TenantId = @TenantId;
+		END
 
 		IF @SkipAddress = 0
 		BEGIN
@@ -406,7 +446,7 @@ BEGIN
 			END
 			ELSE
 			BEGIN
-				-- Verify address belongs to this customer + tenant  
+				-- Verify address belongs to this customer + tenant    
 				IF NOT EXISTS (
 						SELECT 1
 						FROM CustomerAddresses WITH (NOLOCK)
@@ -431,20 +471,7 @@ BEGIN
 				END
 
 				UPDATE CustomerAddresses
-				SET
-					--AddressType = @AddressType  
-					-- ,Street1 = ISNULL(@Street1, '')  
-					-- ,Street2 = @Street2  
-					-- ,Landmark = @Landmark  
-					-- ,Area = @Area  
-					-- ,City = @City  
-					-- ,STATE = @State  
-					-- ,ZipCode = ISNULL(@ZipCode,ZipCode)  
-					IsDefault = ISNULL(@IsDefault, 1)
-					--,Latitude = @Latitude  
-					--,Longitude = @Longitude  
-					--,Country = @Country  
-					--,FullAddress = @FullAddress  
+				SET IsDefault = ISNULL(@IsDefault, 1)
 					,UpdatedBy = @UserId
 					,UpdatedDate = @dt
 					,UpdatedUTCDate = @dtUTC
@@ -507,6 +534,9 @@ BEGIN
 			,LeadSourceId = @LeadSourceId
 			,PurchaseUrgencyId = @PurchaseUrgencyId
 			,CustomerBehaviorId = @CustomerBehaviorId
+			,ArchitectBehaviorId = @ArchitectBehaviorId
+			,VisitForId = @VisitForId
+			,CompanyName = ISNULL(@CompanyName, CompanyName)
 			,BuyingRangeValueId = @BuyingRangeValueId
 			,AlternateMobileNumber = @AlternateMobileNumber
 			,InquiryAreaRequirement = @InquiryAreaRequirement
@@ -580,9 +610,17 @@ BEGIN
 		SET @ObjectName = OBJECT_NAME(@@PROCID);
 		SET @ErrorMsg = ERROR_MESSAGE();
 
-		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
-			,@ErrorMsg = @ErrorMsg;
+		-- ONLY log true unexpected system/database errors (bypasses business validation throws using 50001)
+		IF ERROR_NUMBER() <> 50001
+		BEGIN
+			EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+				,@ErrorMsg = @ErrorMsg;
+		END
 
-		THROW
+		-- Semicolon required before parameterless THROW per T-SQL syntax rules
+		;THROW;
 	END CATCH
-END;
+END
+
+GO
+

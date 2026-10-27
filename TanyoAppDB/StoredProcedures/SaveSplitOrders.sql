@@ -195,7 +195,7 @@ BEGIN
 				FROM #OrderPayments
 			END
 
-			EXEC SplitSaveApprovedOrder @OrderId = @NewOrderID
+			EXEC SplitSaveApprovedOrder_V2 @OrderId = @NewOrderID
 				,@TenantId = @TenantID
 				,@UserId = @UserId
 				,@Comment = NULL

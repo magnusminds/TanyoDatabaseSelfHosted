@@ -28,6 +28,9 @@ CREATE TABLE [dbo].[AspNetUsers] (
     [IsRetailerUser]          BIT                DEFAULT ((1)) NOT NULL,
     [IsManager]               BIT                DEFAULT ((0)) NOT NULL,
     [FieldStoreOperationType] INT                NULL,
+    [IsAppCatalogueNewView]   BIT                CONSTRAINT [DF_AspNetUsers_IsAppCatalogueNewView] DEFAULT ((0)) NOT NULL,
+    [SalesTarget]             NUMERIC (18, 2)    CONSTRAINT [DF_AspNetUsers_SalesTarget] DEFAULT ((0)) NOT NULL,
+    [Salary]                  NUMERIC (18, 2)    CONSTRAINT [DF_AspNetUsers_Salary] DEFAULT ((0)) NOT NULL,
     CONSTRAINT [PK_AspNetUsers] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80)
 );
 

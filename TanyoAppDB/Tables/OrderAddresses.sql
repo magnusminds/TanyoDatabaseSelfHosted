@@ -5,7 +5,7 @@ CREATE TABLE [dbo].[OrderAddresses] (
     [FirstName]         VARCHAR (50)       NOT NULL,
     [LastName]          VARCHAR (50)       NULL,
     [EmailId]           VARCHAR (100)      NULL,
-    [PhoneNumber]       VARCHAR (10)       NOT NULL,
+    [PhoneNumber]       VARCHAR (16)       NOT NULL,
     [AddressType]       VARCHAR (15)       NOT NULL,
     [Street1]           VARCHAR (200)      NOT NULL,
     [Street2]           VARCHAR (200)      NULL,

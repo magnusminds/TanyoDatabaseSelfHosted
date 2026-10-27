@@ -20,7 +20,9 @@
       <DatabaseSqlCmdVariable>TanyoLogs</DatabaseSqlCmdVariable>
     </ArtifactReference>
     <Build Remove="Security\**\*.sql" />
+    <Build Include="Security\HangFire.sql" />
     <Build Remove="Views\UT_VW_ValidateInverntoryLogData.sql" />
+    <Build Remove="Views\vw_DuplicateDeliveryRowCounts.sql" />
   </ItemGroup>
   <ItemGroup>
     <SqlCmdVariable Include="TanyoLogs">

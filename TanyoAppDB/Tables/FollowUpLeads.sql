@@ -19,3 +19,10 @@ CREATE NONCLUSTERED INDEX [ix_nc_FollowUpLeads_cover]
 
 GO
 
+CREATE NONCLUSTERED INDEX [IX_NC_FollowUpLeads_LeadId_FollowUpDate]
+    ON [dbo].[FollowUpLeads]([LeadId] ASC, [FollowUpDate] DESC)
+    INCLUDE([FollowUpComment]);
+
+
+GO
+

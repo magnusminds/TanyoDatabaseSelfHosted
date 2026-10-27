@@ -15,14 +15,14 @@ CREATE TABLE [dbo].[AnnouncementsUserMapping] (
 
 GO
 
-CREATE CLUSTERED INDEX [ix_C_AnnouncementsUserMapping_ID]
-    ON [dbo].[AnnouncementsUserMapping]([AnnouncementId] ASC) WITH (FILLFACTOR = 70);
+CREATE NONCLUSTERED INDEX [IX_NC_AnnouncementsUserMapping_cover]
+    ON [dbo].[AnnouncementsUserMapping]([TenantId] ASC, [AnnouncementId] ASC, [NotificationType] ASC, [IsRead] ASC) WITH (FILLFACTOR = 70);
 
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_NC_AnnouncementsUserMapping_cover]
-    ON [dbo].[AnnouncementsUserMapping]([TenantId] ASC, [AnnouncementId] ASC, [NotificationType] ASC, [IsRead] ASC) WITH (FILLFACTOR = 70);
+CREATE CLUSTERED INDEX [ix_C_AnnouncementsUserMapping_ID]
+    ON [dbo].[AnnouncementsUserMapping]([AnnouncementId] ASC) WITH (FILLFACTOR = 70);
 
 
 GO

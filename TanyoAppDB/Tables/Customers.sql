@@ -4,8 +4,8 @@ CREATE TABLE [dbo].[Customers] (
     [FirstName]             VARCHAR (150)                                                     NOT NULL,
     [LastName]              VARCHAR (50)                                                      NULL,
     [EmailId]               VARCHAR (100) NULL,
-    [PhoneNumber]           VARCHAR (10)   NOT NULL,
-    [AltPhoneNumber]        VARCHAR (10)                                                      NULL,
+    [PhoneNumber]           VARCHAR (16)                                                      NOT NULL,
+    [AltPhoneNumber]        VARCHAR (16)                                                      NULL,
     [GSTNo]                 VARCHAR (15)                                                      NULL,
     [RefferedBy]            BIGINT                                                            NULL,
     [Discount]              NUMERIC (5, 2)                                                    CONSTRAINT [DF_Customers_Discount] DEFAULT ((0)) NOT NULL,
@@ -31,6 +31,12 @@ CREATE TABLE [dbo].[Customers] (
     [PANNo]                 VARCHAR (15)                                                      NULL,
     [ProfessionId]          INT                                                               NULL,
     [SpecializedInId]       BIGINT                                                            NULL,
+    [ArchitectCategoryId]   INT                                                               NULL,
+    [ArchitectTypeId]       INT                                                               NULL,
+    [EventId]               INT                                                               NULL,
+    [SocialMediaUrl]        VARCHAR (500)                                                     NULL,
+    [EventText]             VARCHAR (500)                                                     NULL,
+    [MonthlyTarget]         DECIMAL (18, 2)                                                   NULL,
     CONSTRAINT [PK__Customer__A4AE64B881128DE3] PRIMARY KEY CLUSTERED ([CustomerId] ASC) WITH (FILLFACTOR = 80)
 );
 

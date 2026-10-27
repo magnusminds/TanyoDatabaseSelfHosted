@@ -1,7 +1,7 @@
-/*
-	EXEC [dbo].[GetOrderSetItemDetailByOrderId]
-		@TenantId = 2
-		,@OrderId = 63077
+/*    
+ EXEC [dbo].[GetOrderSetItemDetailByOrderId]    
+  @TenantId = 2    
+  ,@OrderId = 63077    
 */
 CREATE PROCEDURE [dbo].[GetOrderSetItemDetailByOrderId] (
 	@TenantId INT
@@ -15,10 +15,15 @@ BEGIN
 			,@InteriorCommission NUMERIC(18, 2)
 			,@TotalSetAmount NUMERIC(18, 2)
 			,@dt DATE = CAST(GETDATE() AS DATE)
+			,@IsAllowDiscount BIT
 		DECLARE @OrderSetTotalAmount TABLE (
 			OrderSetId BIGINT
 			,TotalSetAmount NUMERIC(18, 0)
 			)
+
+		SELECT @IsAllowDiscount = IsAllowDiscount
+		FROM TenantConfigurations
+		WHERE TenantId = @TenantId
 
 		INSERT INTO @OrderSetTotalAmount (
 			OrderSetId
@@ -63,9 +68,24 @@ BEGIN
 			,OSI.ProvidedMaterial
 			,ISNULL(CT.IsManufacturing, 0) AS IsManufacturing
 			,OSI.ItemStatus
-			,OSI.OfferId
-			,ISNULL(OSI.OfferPercentage, 0) AS OfferPercentage
-			,OFS.OfferTitle
+			--,OSI.OfferId    
+			,CASE 
+				WHEN @IsAllowDiscount = 1
+					THEN OSI.OfferId
+				ELSE NULL
+				END AS OfferId
+			--,ISNULL(OSI.OfferPercentage, 0) AS OfferPercentage    
+			,CASE 
+				WHEN @IsAllowDiscount = 1
+					THEN ISNULL(OSI.OfferPercentage, 0)
+				ELSE NULL
+				END AS OfferPercentage
+			--,OFS.OfferTitle    
+			,CASE 
+				WHEN @IsAllowDiscount = 1
+					THEN OFS.OfferTitle
+				ELSE NULL
+				END AS OfferTitle
 			,OSI.MRP
 			,OSI.ParentOrderSetItemId
 			,CAST(CASE 
@@ -114,14 +134,15 @@ BEGIN
 				ELSE 0
 				END AS OrderSetItemTypeId
 			,OSI.UnitSalePrice
-			-- ,CAST(0 AS BIGINT) AS VendorId
-			-- ,'' AS VendorName
-			-- ,CAST(1 AS BIT) AS VendorGSTType
+			-- ,CAST(0 AS BIGINT) AS VendorId    
+			-- ,'' AS VendorName    
+			-- ,CAST(1 AS BIT) AS VendorGSTType    
 			,VendorDetails.VendorId AS VendorId
 			,VendorDetails.VendorName AS VendorName
 			,VendorDetails.GSTType AS VendorGSTType
 			,POP.POProductId AS POId
 			,POP.PONumber
+			,POP.IsOrderItemLevelPO
 			,CAST(ISNULL(CT.GST, 18) AS NUMERIC(18, 2)) AS CategoryGST
 			,CAST(CASE 
 					WHEN LTRIM(RTRIM(ISNULL(TN.STATE, ''))) = ''
@@ -132,7 +153,7 @@ BEGIN
 						THEN 1
 					ELSE 0
 					END AS BIT) AS IsVendorInterState
-		--		,CAST(0 AS BIT) AS IsVendorInterState
+		--  ,CAST(0 AS BIT) AS IsVendorInterState    
 		FROM OrderSets OS WITH (NOLOCK)
 		INNER JOIN @OrderSetTotalAmount ostm ON ostm.OrderSetId = OS.OrderSetId
 		INNER JOIN OrderSetItems OSI WITH (NOLOCK) ON OSI.OrderSetId = OS.OrderSetId
@@ -148,16 +169,56 @@ BEGIN
 			AND SOH.IsStockOnHold = 1
 			AND OSI.IsQuantityOnHold = 1
 			AND SOH.HoldUptoDate > @dt
+		--OUTER APPLY (    
+		-- SELECT TOP 1 POPI.ProductId    
+		--  ,POP.POProductId    
+		--  ,POP.PONumber    
+		-- FROM POProductItems POPI WITH (NOLOCK)    
+		-- INNER JOIN POProducts POP WITH (NOLOCK) ON POPI.POProductId = POP.POProductId    
+		--  AND POP.IsDeleted = 0    
+		--  AND POP.Status = 2    
+		-- WHERE popi.ProductId = osi.SubjectId    
+		-- ORDER BY POP.OrderDate    
+		-- ) AS POP    
 		OUTER APPLY (
 			SELECT TOP 1 POPI.ProductId
 				,POP.POProductId
 				,POP.PONumber
+				,CAST(CASE 
+						WHEN ISNULL(POPI.OrderSetItemId, 0) <> 0
+							AND POPI.OrderSetItemId = OSI.OrderSetItemId
+							THEN 1
+						ELSE 0
+						END AS BIT) AS IsOrderItemLevelPO
 			FROM POProductItems POPI WITH (NOLOCK)
 			INNER JOIN POProducts POP WITH (NOLOCK) ON POPI.POProductId = POP.POProductId
 				AND POP.IsDeleted = 0
-				AND POP.Status = 2
-			WHERE popi.ProductId = osi.SubjectId
-			ORDER BY POP.OrderDate
+				AND POP.Status IN (
+					1
+					,2
+					,4
+					,5
+					)
+				AND POP.TenantId = @TenantId
+			WHERE POPI.ProductId = OSI.SubjectId
+				AND (
+					-- Exact sales order item-level PO
+					POPI.OrderSetItemId = OSI.OrderSetItemId
+					OR
+					-- Generic PO item
+					(
+						ISNULL(POPI.OrderSetItemId, 0) = 0
+						AND POP.Status <> 4
+						)
+					)
+			ORDER BY CASE 
+					WHEN ISNULL(POPI.OrderSetItemId, 0) <> 0
+						AND POPI.OrderSetItemId = OSI.OrderSetItemId
+						THEN 1
+					ELSE 2
+					END
+				,POP.OrderDate ASC
+				,POP.POProductId ASC
 			) AS POP
 		OUTER APPLY (
 			SELECT TOP 1 V.VendorId

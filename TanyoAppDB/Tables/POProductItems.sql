@@ -30,7 +30,10 @@ CREATE TABLE [dbo].[POProductItems] (
     [IGSTAmount]                NUMERIC (18, 2) NULL,
     [TotalPrice]                AS                                                   (CONVERT([numeric](18,2),round([UnitPrice]*[Quantity],(0)))),
     [AmountBeforeGST]           AS                                                   (CONVERT([numeric](18,2),round(case when [GSTType]=(0) then (([UnitPrice]*[Quantity])*(100))/nullif((100)+[GST],(0)) else [UnitPrice]*[Quantity] end,(0)))),
-    [TotalAmount]               AS                                                   (CONVERT([numeric](18,2),round(case when [GSTType]=(0) then (([UnitPrice]*[Quantity])*(100))/nullif((100)+[GST],(0)) else [UnitPrice]*[Quantity] end,(0))+case when [IsInterState]=(1) then isnull([IGSTAmount],(0)) else isnull([CGSTAmount],(0))+isnull([SGSTAmount],(0)) end)) PERSISTED,
+    [TotalAmount_Old]           NUMERIC (18, 2)                                      NULL,
+    [TotalAmount]               AS                                                   (CONVERT([numeric](18,2),round(case when [GSTType]=(0) then [UnitPrice]*[Quantity] else [UnitPrice]*[Quantity]+case when [IsInterState]=(1) then isnull([IGSTAmount],(0)) else isnull([CGSTAmount],(0))+isnull([SGSTAmount],(0)) end end,(0)))),
+    [ParentPOProductItemId]     BIGINT                                               NULL,
+    [IsAddOn]                   BIT                                                  CONSTRAINT [DF_POProductItems_IsAddOn] DEFAULT ((0)) NOT NULL,
     CONSTRAINT [PK__POProduc__818EDC75F1D0A8B7] PRIMARY KEY CLUSTERED ([POProductItemId] ASC)
 );
 

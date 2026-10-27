@@ -25,6 +25,13 @@ CREATE TABLE [dbo].[TenantConfigurations] (
     [InwardEntryNumberCounter]        BIGINT             DEFAULT ((0)) NOT NULL,
     [IsSpecialDiscount]               BIT                CONSTRAINT [DF_TenantConfigurations_IsSpecialDiscount] DEFAULT ((0)) NOT NULL,
     [UseAsOfNowStock]                 BIT                CONSTRAINT [DF_TenantConfigurations_UseAsOfNowStock] DEFAULT ((0)) NOT NULL,
+    [RedirectToApprovedScreen]        BIT                CONSTRAINT [DF_TenantConfigurations_RedirectToApprovedScreen] DEFAULT ((1)) NOT NULL,
+    [EnableWarrantyNotification]      BIT                CONSTRAINT [DF_TenantConfigurations_EnableWarrantyNotification] DEFAULT ((0)) NOT NULL,
+    [IsAllowSOCreatePortal]           BIT                DEFAULT ((0)) NOT NULL,
+    [IsKasarEnabled]                  BIT                DEFAULT ((0)) NOT NULL,
+    [AppThemeColorsJson]              NVARCHAR (MAX)     NULL,
+    [UseMarginMultiplierForPricing]   BIT                DEFAULT ((0)) NOT NULL,
+    [ShowExactStockQuantityInShare]   BIT                CONSTRAINT [DF_TenantConfigurations_ShowExactStockQuantityInShare] DEFAULT ((0)) NOT NULL,
     PRIMARY KEY CLUSTERED ([TenantConfigurationID] ASC)
 );
 

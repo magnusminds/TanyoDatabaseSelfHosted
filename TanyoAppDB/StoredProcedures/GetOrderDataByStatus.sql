@@ -1,10 +1,10 @@
-/*
-	EXEC [dbo].[GetOrderDataByStatus]
-		@TenantId = 2
-		,@CurrentUserId = 4528
-		,@CategoryId = NULL
+/*  
+ EXEC [dbo].[GetOrderDataByStatus]  
+  @TenantId = 2  
+  ,@CurrentUserId = 4528  
+  ,@CategoryId = NULL  
 */
-CREATE  PROCEDURE [dbo].[GetOrderDataByStatus] (
+CREATE PROCEDURE [dbo].[GetOrderDataByStatus] (
 	@TenantId INT = 1
 	,@CurrentUserId INT
 	,@DeliveryNo NVARCHAR(50) = NULL
@@ -19,7 +19,7 @@ CREATE  PROCEDURE [dbo].[GetOrderDataByStatus] (
 	,@DeliveryToDate DATETIME = NULL
 	,@ApprovedFromDate DATE = NULL
 	,@ApprovedToDate DATE = NULL
-	,@ItemStatus INT = 2  
+	,@ItemStatus INT = 2
 	,@PageIndex INT = 1
 	,@PageSize INT = 100
 	,@SortBy VARCHAR(50) = 'TentativeDeliveryDate'
@@ -94,75 +94,76 @@ BEGIN
 				,ISNULL(SUM(p.ReceivedAmount), 0) AS TotalReceivedAmount
 			FROM Payments p WITH (NOLOCK)
 			WHERE p.IsDeleted = 0
-			AND p.PaymentStatus = 1
-			AND p.TenantId = @TenantId
+				AND p.PaymentStatus = 1
+				AND p.TenantId = @TenantId
 			GROUP BY OrderId
 			) pmt ON pmt.OrderId = o.OrderId
 		WHERE o.TenantId = @TenantId
-		AND osi.ParentOrderSetItemId IS NULL
-		AND osi.ItemStatus = @ItemStatus
-		AND o.STATUS <> 9
-		AND (
-			@DeliveryNo IS NULL
-			OR osi.DeliveryNo LIKE '%' + @DeliveryNo + '%'
-			)
-		AND (
-			@OrderNo IS NULL
-			OR o.OrderNo LIKE '%' + @OrderNo + '%'
-			)
-		AND (
-			@CustomerName IS NULL
-			OR (ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, '')) LIKE '%' + @CustomerName + '%'
-			)
-		AND (
-			@SalesmanName IS NULL
-			OR O.SalesmanId = @SalesmanName
-			)
-		AND (
-			@CategoryId IS NULL
-			OR cat.CategoryId = @CategoryId
-			)
-		AND (
-			@OrderType IS NULL
-			OR o.OrderType = @OrderType
-			)
-		AND (
-			@OrderFromDate IS NULL
-			OR (o.ApprovedDate) >= @OrderFromDateTime
-			)
-		AND (
-			@OrderToDate IS NULL
-			OR (o.ApprovedDate) <= @OrderToDateTime
-			)
-		AND (
-			(
-				@DeliveryFromDate IS NULL
-				AND @DeliveryToDate IS NULL
+			AND osi.ParentOrderSetItemId IS NULL
+			AND osi.ItemStatus = @ItemStatus
+			AND osi.IsDeleted = 0
+			AND o.Status <> 9
+			AND (
+				@DeliveryNo IS NULL
+				OR osi.DeliveryNo LIKE '%' + @DeliveryNo + '%'
 				)
-			OR (
-				osi.DeliveryDate BETWEEN ISNULL(@DeliveryFromDate, osi.DeliveryDate)
-					AND ISNULL(@DeliveryToDate, osi.DeliveryDate)
+			AND (
+				@OrderNo IS NULL
+				OR o.OrderNo LIKE '%' + @OrderNo + '%'
 				)
-			)
-		AND (
-			@ProductTitle IS NULL
-			OR p.ProductTitle LIKE '%' + @ProductTitle + '%'
-			)
-		AND (
-			@PaymentCollectionStatus IS NULL
-			OR @PaymentCollectionStatus = - 1
-			OR CASE 
-				WHEN ROUND(ISNULL(o.TotalAmt, 0), 0) - ROUND(ISNULL(pmt.TotalReceivedAmount, 0), 0) <= 0
-					THEN 1
-				WHEN ROUND(ISNULL(pmt.TotalReceivedAmount, 0), 0) > 0
-					THEN 2
-				ELSE 3
-				END = @PaymentCollectionStatus
-			)
-		AND (
-			@ModelNo IS NULL
-			OR p.ModelNo LIKE '%' + @ModelNo + '%'
-			)
+			AND (
+				@CustomerName IS NULL
+				OR (ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, '')) LIKE '%' + @CustomerName + '%'
+				)
+			AND (
+				@SalesmanName IS NULL
+				OR O.SalesmanId = @SalesmanName
+				)
+			AND (
+				@CategoryId IS NULL
+				OR cat.CategoryId = @CategoryId
+				)
+			AND (
+				@OrderType IS NULL
+				OR o.OrderType = @OrderType
+				)
+			AND (
+				@OrderFromDate IS NULL
+				OR (o.ApprovedDate) >= @OrderFromDateTime
+				)
+			AND (
+				@OrderToDate IS NULL
+				OR (o.ApprovedDate) <= @OrderToDateTime
+				)
+			AND (
+				(
+					@DeliveryFromDate IS NULL
+					AND @DeliveryToDate IS NULL
+					)
+				OR (
+					osi.DeliveryDate BETWEEN ISNULL(@DeliveryFromDate, osi.DeliveryDate)
+						AND ISNULL(@DeliveryToDate, osi.DeliveryDate)
+					)
+				)
+			AND (
+				@ProductTitle IS NULL
+				OR p.ProductTitle LIKE '%' + @ProductTitle + '%'
+				)
+			AND (
+				@PaymentCollectionStatus IS NULL
+				OR @PaymentCollectionStatus = - 1
+				OR CASE 
+					WHEN ROUND(ISNULL(o.TotalAmt, 0), 0) - ROUND(ISNULL(pmt.TotalReceivedAmount, 0), 0) <= 0
+						THEN 1
+					WHEN ROUND(ISNULL(pmt.TotalReceivedAmount, 0), 0) > 0
+						THEN 2
+					ELSE 3
+					END = @PaymentCollectionStatus
+				)
+			AND (
+				@ModelNo IS NULL
+				OR p.ModelNo LIKE '%' + @ModelNo + '%'
+				)
 		ORDER BY CASE 
 				WHEN @SortBy = 'DeliveryNo'
 					AND @SortOrder = 'ASC'
@@ -314,25 +315,20 @@ BEGIN
 				WHEN @SortBy = 'ModelNo'
 					AND @SortOrder = 'DESC'
 					THEN p.ModelNo
-				END DESC	
-		OFFSET(@PageIndex - 1) * @PageSize ROWS
+				END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
+
 		FETCH NEXT @PageSize ROWS ONLY;
 	END TRY
 
 	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000)
-		DECLARE @ErrorSeverity INT
-		DECLARE @ErrorState INT
-
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY()
-			,@ErrorState = ERROR_STATE()
-
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
+			DECLARE @ObjectName VARCHAR(500)
+				,@ErrorMsg VARCHAR(MAX);
+	
+			SET @ObjectName = OBJECT_NAME(@@PROCID);
+			SET @ErrorMsg = ERROR_MESSAGE();
+	
+			EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+				,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

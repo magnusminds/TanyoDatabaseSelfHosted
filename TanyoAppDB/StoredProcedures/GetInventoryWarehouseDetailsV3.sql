@@ -146,3 +146,6 @@ BEGIN
 			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
+
+GO
+

@@ -23,6 +23,7 @@ CREATE TABLE [dbo].[Categories] (
     [IsSellByPerSQFT]             BIT                                                 DEFAULT ((0)) NOT NULL,
     [IsFabric]                    BIT                                                 CONSTRAINT [DF_Categories_IsFabric] DEFAULT ((0)) NOT NULL,
     [ParentCategoryId]            BIGINT                                              NULL,
+    [CoverImage]                  VARCHAR (MAX)                                       NULL,
     PRIMARY KEY CLUSTERED ([CategoryId] ASC) WITH (FILLFACTOR = 80)
 );
 

@@ -1,23 +1,24 @@
-/*
-EXEC [dbo].[DeliverOrderSetItem]
-    @TenantId = 1207,
-    @ProductId = 402789,
-    @OrderSetItemId = 446052,
-    @OrderId = 260537,
-    @UserId = 13305,
-    @WarehouseDetails = '[
-        {
-            "WarehouseId": 10259,
-            "DeliverQuantity": 10.00
-        }
-    ]',
-    @Comment = NULL;
+
+/*  
+EXEC [dbo].[DeliverOrderSetItem]  
+    @TenantId = 1207,  
+    @ProductId = 402789,  
+    @OrderSetItemId = 446052,  
+    @OrderId = 260537,  
+    @UserId = 13305,  
+    @WarehouseDetails = '[  
+        {  
+            "WarehouseId": 10259,  
+            "DeliverQuantity": 10.00  
+        }  
+    ]',  
+    @Comment = NULL;  
 */
 CREATE PROCEDURE [dbo].[DeliverOrderSetItem] (
-	@TenantId INT 
-	,@ProductId BIGINT 
-	,@OrderSetItemId BIGINT 
-	,@OrderId BIGINT 
+	@TenantId INT
+	,@ProductId BIGINT
+	,@OrderSetItemId BIGINT
+	,@OrderId BIGINT
 	,@UserId INT
 	,@WarehouseDetails VARCHAR(MAX)
 	,@Comment VARCHAR(MAX) = NULL
@@ -70,7 +71,7 @@ BEGIN
 		SELECT @IsRestrictDeliveryWithoutFullPayment = IsRestrictDeliveryWithoutFullPayment
 			,@CheckProductStock = CheckProductStock
 			,@CheckRawMaterialStock = CheckRawMaterialStock
-		--,@IsAutoManufacture = IsAutoManufacture
+		--,@IsAutoManufacture = IsAutoManufacture  
 		FROM Tenants WITH (NOLOCK)
 		WHERE TenantId = @TenantId
 
@@ -145,7 +146,7 @@ BEGIN
 		RETURN;
 	END
 
-	-- Manage Product Quantity  
+	-- Manage Product Quantity    
 	SELECT @productSubjectTypeId = SubjectTypeId
 	FROM SubjectTypes WITH (NOLOCK)
 	WHERE SubjectTypeName = 'Products'
@@ -193,65 +194,69 @@ BEGIN
 	FROM #orderSetItemByOrderId
 	WHERE OrderSetItemId = @OrderSetItemId
 
-		CREATE TABLE #UnmappedWarehouses (
-			Id INT IDENTITY(1,1),
-			WarehouseId INT,
-			WareHouseName VARCHAR(50)
+	CREATE TABLE #UnmappedWarehouses (
+		Id INT IDENTITY(1, 1)
+		,WarehouseId INT
+		,WareHouseName VARCHAR(50)
 		);
 
-		-- Identify warehouses selected in delivery that are NOT mapped in ProductQuantitiesByWarehouse
-		INSERT INTO #UnmappedWarehouses (WarehouseId,WareHouseName)
-		SELECT WD.WarehouseId , W.Name
-		FROM #WarehouseDeliverDetails WD
-		INNER JOIN Warehouse w ON WD.WarehouseId = w.Id
-		WHERE NOT EXISTS (
+	-- Identify warehouses selected in delivery that are NOT mapped in ProductQuantitiesByWarehouse  
+	INSERT INTO #UnmappedWarehouses (
+		WarehouseId
+		,WareHouseName
+		)
+	SELECT WD.WarehouseId
+		,W.Name
+	FROM #WarehouseDeliverDetails WD
+	INNER JOIN Warehouse w ON WD.WarehouseId = w.Id
+	WHERE NOT EXISTS (
 			SELECT 1
 			FROM ProductQuantitiesByWarehouse PQW WITH (NOLOCK)
 			WHERE PQW.ProductId = @ProductId
 				AND PQW.WarehouseId = WD.WarehouseId
-		);
+			);
 
-		DECLARE  @Inc INT = 1 
-		DECLARE  @Cnt INT = 0
-		DECLARE  @MWarehouseId BIGINT;
-		DECLARE  @MWarehouseName VARCHAR(50);
+	DECLARE @Inc INT = 1
+	DECLARE @Cnt INT = 0
+	DECLARE @MWarehouseId BIGINT;
+	DECLARE @MWarehouseName VARCHAR(50);
 
-		SELECT @Cnt = COUNT(1) FROM #UnmappedWarehouses;
+	SELECT @Cnt = COUNT(1)
+	FROM #UnmappedWarehouses;
 
-		WHILE @Cnt >= @Inc
-		BEGIN
-			SELECT @MWarehouseId = WarehouseId 
+	WHILE @Cnt >= @Inc
+	BEGIN
+		SELECT @MWarehouseId = WarehouseId
 			,@MWarehouseName = WareHouseName
-			FROM #UnmappedWarehouses 
-			WHERE Id = @Inc;
+		FROM #UnmappedWarehouses
+		WHERE Id = @Inc;
 
+		SET @Description = 'Inventory record created with as initial quantity of 0.00 in the' + @MWarehouseName + 'warehouse during delivery.'
 
-			SET @Description = 'Inventory record created with as initial quantity of 0.00 in the' + @MWarehouseName + 'warehouse during delivery.'
-			EXEC dbo.PopulateProductWarehouseQuantity 
-				@TenantId = @TenantId
-				,@UserId = @UserId
-				,@ProductId = @ProductId
-				,@WarehouseId = @MWarehouseId
-				,@Quantity = 0
-				,@Description = @Description;
+		EXEC dbo.PopulateProductWarehouseQuantity @TenantId = @TenantId
+			,@UserId = @UserId
+			,@ProductId = @ProductId
+			,@WarehouseId = @MWarehouseId
+			,@Quantity = 0
+			,@Description = @Description;
 
-			SET @Inc = @Inc + 1;
-		END;
+		SET @Inc = @Inc + 1;
+	END;
 
-		DROP TABLE IF EXISTS #UnmappedWarehouses;
+	DROP TABLE IF EXISTS #UnmappedWarehouses;
 
-	SELECT PQW.ProductQuantityByWarehouseId
-		,PQW.WarehouseId
-		,PQW.Quantity AS WarehouseQuantity
-		,WD.Quantity AS ProvidedQuantity
-		,ROW_NUMBER() OVER (
-			ORDER BY ProductQuantityByWarehouseId
-			) AS Rn
-	INTO #ProductStockByWarehouse
-	FROM ProductQuantitiesByWarehouse PQW WITH (NOLOCK)
-	INNER JOIN #WarehouseDeliverDetails WD ON PQW.WarehouseId = WD.WarehouseId
-	INNER JOIN #orderSetItemByOrderId OSI ON OSI.SubjectId = PQW.ProductId
-	WHERE OSI.OrderSetItemId = @OrderSetItemId
+		SELECT PQW.ProductQuantityByWarehouseId
+			,PQW.WarehouseId
+			,PQW.Quantity AS WarehouseQuantity
+			,WD.Quantity AS ProvidedQuantity
+			,ROW_NUMBER() OVER (
+				ORDER BY ProductQuantityByWarehouseId
+				) AS Rn
+		INTO #ProductStockByWarehouse
+		FROM ProductQuantitiesByWarehouse PQW WITH (NOLOCK)
+		INNER JOIN #WarehouseDeliverDetails WD ON PQW.WarehouseId = WD.WarehouseId
+		INNER JOIN #orderSetItemByOrderId OSI ON OSI.SubjectId = PQW.ProductId
+		WHERE OSI.OrderSetItemId = @OrderSetItemId
 
 	CREATE TABLE #RawMaterials (
 		Seq INT IDENTITY
@@ -274,8 +279,8 @@ BEGIN
 		AND PM.SubjectTypeId = @RawMaterialSubjectTypeId
 	GROUP BY PM.SubjectId
 
-	SET @Cnt  = 0
-	SET @Inc  = 1
+	SET @Cnt = 0
+	SET @Inc = 1
 
 	SELECT @Cnt = COUNT(RawMaterialId)
 	FROM #RawMaterials
@@ -308,37 +313,62 @@ BEGIN
 	BEGIN TRY
 		BEGIN TRAN DeliverOrderSetItem
 
+		DECLARE @CurrentItemStatus INT;
+
+		SELECT @CurrentItemStatus = ItemStatus
+		FROM dbo.OrderSetItems WITH (
+				UPDLOCK
+				,HOLDLOCK
+				)
+		WHERE OrderSetItemId = @OrderSetItemId
+			AND OrderId = @OrderId
+			AND IsDeleted = 0;
+
+		IF @CurrentItemStatus IS NULL
+		BEGIN
+			;THROW 50001
+				,'Order item not found.'
+				,1;
+		END
+
+		IF @CurrentItemStatus = 3
+		BEGIN
+			;THROW 50002
+				,'This order item has already been delivered.'
+				,1;
+		END
+
 		IF @OrderSetItemSubjectTypeId = @ProductSubjectTypeId
 		BEGIN
-			--	IF @CheckProductStock = 1
-			--		OR @CheckRawMaterialStock = 1
-			--	BEGIN
-			--		IF EXISTS (
-			--				SELECT 1
-			--				FROM #ProductStockByWarehouse
-			--				WHERE (WarehouseQuantity - ProvidedQuantity) < 0
-			--				)
-			--		BEGIN
-			--			SELECT TOP 1 @WarehouseName = W.Name
-			--			FROM #ProductStockByWarehouse PSW
-			--			INNER JOIN Warehouse W ON W.Id = PSW.WarehouseId
-			--			WHERE (WarehouseQuantity - ProvidedQuantity) < 0
-			--			ROLLBACK TRAN
-			--			SET @ReturnMessage = 'You have Maintain Positive Product Inventory enabled — ' + @WarehouseName + ' has no stock'
-			--			SET @ReturnStatus = 0;
-			--			SELECT CAST(@ReturnStatus AS BIT) AS [ReturnCode]
-			--				,@ReturnMessage AS [ReturnMessage]
-			--				,@ReturnOrderId AS [ReturnOrderId];
-			--			RETURN;
-			--		END
-			--	END
-			--UPDATE pqw
-			--SET pqw.Quantity = pqw.Quantity - PSW.ProvidedQuantity
-			--	,pqw.LastModifiedBy = @UserId
-			--	,pqw.LastModifiedDate = @DT
-			--	,pqw.LastModifiedUTCDate = @DTUTC
-			--FROM ProductQuantitiesByWarehouse pqw
-			--INNER JOIN #ProductStockByWarehouse PSW ON PQW.ProductQuantityByWarehouseId = PSW.ProductQuantityByWarehouseId
+			-- IF @CheckProductStock = 1  
+			--  OR @CheckRawMaterialStock = 1  
+			-- BEGIN  
+			--  IF EXISTS (  
+			--    SELECT 1  
+			--    FROM #ProductStockByWarehouse  
+			--    WHERE (WarehouseQuantity - ProvidedQuantity) < 0  
+			--    )  
+			--  BEGIN  
+			--   SELECT TOP 1 @WarehouseName = W.Name  
+			--   FROM #ProductStockByWarehouse PSW  
+			--   INNER JOIN Warehouse W ON W.Id = PSW.WarehouseId  
+			--   WHERE (WarehouseQuantity - ProvidedQuantity) < 0  
+			--   ROLLBACK TRAN  
+			--   SET @ReturnMessage = 'You have Maintain Positive Product Inventory enabled — ' + @WarehouseName + ' has no stock'  
+			--   SET @ReturnStatus = 0;  
+			--   SELECT CAST(@ReturnStatus AS BIT) AS [ReturnCode]  
+			--    ,@ReturnMessage AS [ReturnMessage]  
+			--    ,@ReturnOrderId AS [ReturnOrderId];  
+			--   RETURN;  
+			--  END  
+			-- END  
+			--UPDATE pqw  
+			--SET pqw.Quantity = pqw.Quantity - PSW.ProvidedQuantity  
+			-- ,pqw.LastModifiedBy = @UserId  
+			-- ,pqw.LastModifiedDate = @DT  
+			-- ,pqw.LastModifiedUTCDate = @DTUTC  
+			--FROM ProductQuantitiesByWarehouse pqw  
+			--INNER JOIN #ProductStockByWarehouse PSW ON PQW.ProductQuantityByWarehouseId = PSW.ProductQuantityByWarehouseId  
 			DECLARE @Count INT = 0
 			DECLARE @Id INT = 1
 
@@ -400,17 +430,17 @@ BEGIN
 					RETURN;
 				END
 
-				--EXEC PopulateInventoryLogs
-				--@ProductId = @ProductId
-				--,@WarehouseId = @WarehouseId
-				--,@Description = @Description
-				--,@OrderNo = @OrderNo
-				--,@InwardNo = NULL
-				--,@PurchaseOrderNo = NULL
-				--,@Remarks = NULL
-				--,@UserId = @UserId
-				--,@CreatedDate = @DT
-				--,@CreatedUTCDate = @DTUTC
+				--EXEC PopulateInventoryLogs  
+				--@ProductId = @ProductId  
+				--,@WarehouseId = @WarehouseId      
+				--,@Description = @Description  
+				--,@OrderNo = @OrderNo  
+				--,@InwardNo = NULL  
+				--,@PurchaseOrderNo = NULL  
+				--,@Remarks = NULL  
+				--,@UserId = @UserId  
+				--,@CreatedDate = @DT  
+				--,@CreatedUTCDate = @DTUTC  
 				SET @Id = @Id + 1
 			END
 
@@ -444,7 +474,8 @@ BEGIN
 			INNER JOIN #RawMaterialInventory RMI ON RMI.RawMaterialInventoryByWarehouseId = RMIW.RawMaterialInventoryByWarehouseId
 			INNER JOIN #RawMaterialQuantityDeduction RMQ ON RMQ.RawMaterialId = RMI.RawMaterialId;
 
-			SELECT @Cnt = COUNT(1) FROM #ActivityLog;
+			SELECT @Cnt = COUNT(1)
+			FROM #ActivityLog;
 
 			WHILE @Cnt >= @Inc
 			BEGIN
@@ -488,7 +519,7 @@ BEGIN
 		END
 
 		UPDATE OrderSetItems
-		SET ItemStatus = 3 -- OrderSetItemsStatus.Delivered
+		SET ItemStatus = 3 -- OrderSetItemsStatus.Delivered  
 			,DeliveryComment = @Comment
 			,UpdatedBy = @UserId
 			,UpdatedDate = @DT
@@ -497,7 +528,7 @@ BEGIN
 		WHERE OrderSetItemId = @OrderSetItemId;
 
 		UPDATE OrderSetItems
-		SET ItemStatus = 3 -- OrderSetItemsStatus.Delivered
+		SET ItemStatus = 3 -- OrderSetItemsStatus.Delivered  
 			,DeliveryComment = @Comment
 			,UpdatedBy = @UserId
 			,UpdatedDate = @DT
@@ -505,29 +536,29 @@ BEGIN
 			,DeliveryDate = @DT
 		WHERE ParentOrderSetItemId = @OrderSetItemId;
 
-		/*
-		IF EXISTS (SELECT 1 FROM POProductItems WHERE VendorOrderSetItemId = @OrderSetItemId)
-		BEGIN
-
-			UPDATE POProductItems
-			set Status = 5  -- MaterialReady
-			where VendorOrderSetItemId = @OrderSetItemId
-		END
-		IF NOT EXISTS (
-				SELECT 1
-				FROM POProductItems POI WITH (NOLOCK)
-				INNER JOIN POProducts PO WITH (NOLOCK) ON POI.POProductId = PO.POProductId 
-				WHERE VendorOrderId = @OrderId
-					AND POI.Status <> 5
-				)
-		BEGIN
-
-			UPDATE POProducts
-			SET Status = 5
-			WHERE VendorOrderId = @OrderId
-
-		END
-		*/
+		/*  
+  IF EXISTS (SELECT 1 FROM POProductItems WHERE VendorOrderSetItemId = @OrderSetItemId)  
+  BEGIN  
+  
+   UPDATE POProductItems  
+   set Status = 5  -- MaterialReady  
+   where VendorOrderSetItemId = @OrderSetItemId  
+  END  
+  IF NOT EXISTS (  
+    SELECT 1  
+    FROM POProductItems POI WITH (NOLOCK)  
+    INNER JOIN POProducts PO WITH (NOLOCK) ON POI.POProductId = PO.POProductId   
+    WHERE VendorOrderId = @OrderId  
+     AND POI.Status <> 5  
+    )  
+  BEGIN  
+  
+   UPDATE POProducts  
+   SET Status = 5  
+   WHERE VendorOrderId = @OrderId  
+  
+  END  
+  */
 		SET @ActivityDescription = ''
 		SET @ActivityDescription = CASE 
 				WHEN @CategoryTypeId = 2
@@ -552,7 +583,7 @@ BEGIN
 				)
 		BEGIN
 			UPDATE Orders
-			SET Status = 5 -- OrderStatusEnum.Delivered
+			SET Status = 5 -- OrderStatusEnum.Delivered  
 				,UpdatedBy = @UserId
 				,UpdatedDate = @DT
 				,UpdatedUTCDate = @DTUTC
@@ -569,7 +600,7 @@ BEGIN
 		END
 
 		UPDATE OrderManufacturingWorkflows
-		SET ManufacturingStatus = 2 -- OrderManufacturingWorkFlowEnum.Completed
+		SET ManufacturingStatus = 2 -- OrderManufacturingWorkFlowEnum.Completed  
 			,UpdatedBy = @UserId
 			,UpdatedDate = @DT
 			,UpdatedUTCDate = @DTUTC
@@ -613,6 +644,10 @@ BEGIN
 
 		SET @ObjectName = OBJECT_NAME(@@PROCID);
 		SET @ErrorMsg = ERROR_MESSAGE();
+
+		-- Append TenantId and OrderId to the description saved in DBErrorLog
+		SET @ErrorMsg = @ErrorMsg + ' | TenantId: ' + ISNULL(CAST(@TenantId AS VARCHAR(20)), 'NULL')
+			+ ' | OrderId: ' + ISNULL(CAST(@OrderId AS VARCHAR(20)), 'NULL');
 
 		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
 			,@ErrorMsg = @ErrorMsg;

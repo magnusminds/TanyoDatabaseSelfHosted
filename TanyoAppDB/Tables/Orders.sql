@@ -49,17 +49,11 @@ CREATE TABLE [dbo].[Orders] (
     [SpecialDiscount]              NUMERIC (18, 2)                                      CONSTRAINT [DF_Orders_SpecialDiscount] DEFAULT ((0)) NOT NULL,
     [ParentOrderId]                BIGINT                                               NULL,
     [CustomerVisitCount]           INT                                                  CONSTRAINT [DF_Orders_CustomerVisitCount] DEFAULT ((0)) NOT NULL,
-    [TotalAmt]                     AS                                                   (([AmountBeforeGST]+[CGSTAmount])+[SGSTAmount]),
+    [KasarAmount]                  NUMERIC (18, 2)                                      DEFAULT ((0)) NOT NULL,
+    [TotalAmt]                     AS                                                   ((([AmountBeforeGST]+[CGSTAmount])+[SGSTAmount])-[KasarAmount]),
     CONSTRAINT [PK__Orders__C3905BCFA9F235EE] PRIMARY KEY CLUSTERED ([OrderId] ASC) WITH (FILLFACTOR = 80),
     CONSTRAINT [CK_Orders_SalesmanId] CHECK ([SalesmanId]>(0))
 );
-
-
-GO
-
-CREATE NONCLUSTERED INDEX [IX_Orders_TenantId_Status_OrderNo_CreatedDate_ApprovedDate_RefferedBy]
-    ON [dbo].[Orders]([TenantId] ASC, [Status] ASC, [OrderNo] ASC, [CreatedDate] ASC, [ApprovedDate] ASC, [RefferedBy] ASC, [IsArchive] ASC)
-    INCLUDE([AmountBeforeGST], [TentativeDeliveryDate], [CreatedBy], [CustomerID], [TotalAmt], [IsFreeDelivery], [OrderType]) WITH (FILLFACTOR = 80);
 
 
 GO

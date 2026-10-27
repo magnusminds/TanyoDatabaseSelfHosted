@@ -24,8 +24,7 @@ IMPORTANT: If any changes in Parameters or in WHERE clause, please do update [db
 		,@TentativeDeliveryToDate = NULL
   
 */
-CREATE   PROC [dbo].[LisOrderByModule]
-(
+CREATE PROC [dbo].[LisOrderByModule] (
 	@Status INT
 	,@IsArchiveOrders BIT
 	,@TenantId INT
@@ -40,11 +39,11 @@ CREATE   PROC [dbo].[LisOrderByModule]
 	,@SortOrder VARCHAR(100) = 'DESC'
 	,@OrderNo VARCHAR(20) = NULL
 	,@CustomerName VARCHAR(100) = NULL
-    ,@OrderFromDate DATE = NULL
-    ,@OrderToDate DATE = NULL
-    ,@TentativeDeliveryFromDate DATE = NULL
-    ,@TentativeDeliveryToDate DATE = NULL
-)
+	,@OrderFromDate DATE = NULL
+	,@OrderToDate DATE = NULL
+	,@TentativeDeliveryFromDate DATE = NULL
+	,@TentativeDeliveryToDate DATE = NULL
+	)
 WITH ENCRYPTION
 AS
 BEGIN
@@ -61,16 +60,19 @@ BEGIN
 			,@DeliveryToDateTime DATETIMEOFFSET = NULL
 
 		SELECT @OrderFromDateTime = CAST(@OrderFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
-		,@OrderToDateTime = CAST(@OrderToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30'
-		,@DeliveryFromDateTime = CAST(@TentativeDeliveryFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
-		,@DeliveryToDateTime = CAST(@TentativeDeliveryToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30';
+			,@OrderToDateTime = CAST(@OrderToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30'
+			,@DeliveryFromDateTime = CAST(@TentativeDeliveryFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
+			,@DeliveryToDateTime = CAST(@TentativeDeliveryToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30';
 
 		SELECT @HasWholesalerPrice = CASE 
 				WHEN EXISTS (
 						SELECT 1
 						FROM AspNetRoleClaims WITH (NOLOCK)
 						WHERE RoleId = @RoleId
-							AND ClaimValue = 'Permissions.App.Order.WholeselerPrice'
+							AND ClaimValue IN (
+								'Permissions.App.Order.WholeselerPrice'
+								,'Permissions.General.Order.WholeselerPrice'
+								)
 						)
 					THEN 1
 				ELSE 0
@@ -81,7 +83,10 @@ BEGIN
 						SELECT 1
 						FROM AspNetRoleClaims WITH (NOLOCK)
 						WHERE RoleId = @RoleId
-							AND ClaimValue = 'Permissions.App.Order.Approve'
+							AND ClaimValue IN (
+								'Permissions.App.Order.Approve'
+								,'Permissions.General.Order.Approve'
+								)
 						)
 					THEN 1
 				ELSE 0
@@ -92,7 +97,10 @@ BEGIN
 						SELECT 1
 						FROM AspNetRoleClaims WITH (NOLOCK)
 						WHERE RoleId = @RoleId
-							AND ClaimValue = 'Permissions.App.Order.SuperAccess'
+							AND ClaimValue IN (
+								'Permissions.App.Order.SuperAccess'
+								,'Permissions.General.Order.SuperAccess'
+								)
 						)
 					THEN 1
 				ELSE 0
@@ -107,8 +115,7 @@ BEGIN
 		IF OBJECT_ID('tempdb..#Temp_Orders') IS NOT NULL
 			DROP TABLE #Temp_Orders;
 
-		CREATE TABLE #Temp_Orders
-		(
+		CREATE TABLE #Temp_Orders (
 			Id INT PRIMARY KEY IDENTITY
 			,OrderId BIGINT
 			,OrderNo VARCHAR(20)
@@ -141,7 +148,7 @@ BEGIN
 			,ModuleGroup VARCHAR(20)
 			,OrderSetItemId BIGINT
 			,OrderSetItem VARCHAR(100)
-		)
+			)
 
 		INSERT INTO #Temp_Orders
 		SELECT o.OrderId
@@ -189,21 +196,18 @@ BEGIN
 				WHEN f.FollowUpDate IS NOT NULL
 					AND CAST(f.FollowUpDate AS DATE) = @dt
 					AND o.IsPinned = 0
-					AND ISNULL(o.IsFlagged,0) = 0
-				THEN 'Today'
-
+					AND ISNULL(o.IsFlagged, 0) = 0
+					THEN 'Today'
 				WHEN f.FollowUpDate IS NOT NULL
 					AND f.FollowUpDate < @dt
 					AND o.IsPinned = 0
-					AND ISNULL(o.IsFlagged,0) = 0
-				THEN 'Overdue'
-
+					AND ISNULL(o.IsFlagged, 0) = 0
+					THEN 'Overdue'
 				WHEN f.FollowUpDate IS NOT NULL
 					AND f.FollowUpDate > @dt
 					AND o.IsPinned = 0
-					AND ISNULL(o.IsFlagged,0) = 0
-				THEN 'Upcoming'
-
+					AND ISNULL(o.IsFlagged, 0) = 0
+					THEN 'Upcoming'
 				ELSE 'Remaining'
 				END AS ModuleGroup
 			,0 AS OrderSetItemId
@@ -211,7 +215,7 @@ BEGIN
 		FROM Orders o WITH (NOLOCK)
 		INNER JOIN Customers c WITH (NOLOCK) ON o.CustomerID = c.CustomerId
 			AND c.TenantId = o.TenantId
-			--AND c.IsDeleted = 0
+		--AND c.IsDeleted = 0
 		LEFT JOIN AspNetUsers u WITH (NOLOCK) ON o.SalesmanId = u.UserId
 		LEFT JOIN Labels l WITH (NOLOCK) ON o.LabelId = l.LabelId
 			AND l.TenantId = @TenantId
@@ -238,39 +242,47 @@ BEGIN
 				)
 			AND (
 				@IsAdmin = 1
-				OR (@IsAdmin = 0 AND @SupperAccess = 1 AND o.OrderType = @OrderType)
-				OR (@IsAdmin = 0 AND @SupperAccess = 0 
-					AND o.CreatedBy = @UserId 
-					AND o.OrderType = @OrderType)
+				OR (
+					@IsAdmin = 0
+					AND @SupperAccess = 1
+					AND o.OrderType = @OrderType
+					)
+				OR (
+					@IsAdmin = 0
+					AND @SupperAccess = 0
+					AND o.CreatedBy = @UserId
+					AND o.OrderType = @OrderType
+					)
 				)
-			AND(@SalesmanId IS NULL OR o.SalesmanId = @SalesmanId)
+			AND (
+				@SalesmanId IS NULL
+				OR o.SalesmanId = @SalesmanId
+				)
 			AND (
 				ISNULL(@CustomerName, '') = ''
-				OR (
-						ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, '')
-				   ) LIKE '%' + @CustomerName + '%'
+				OR (ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, '')) LIKE '%' + @CustomerName + '%'
+				)
+			AND (
+				@OrderFromDate IS NULL
+				OR o.ApprovedDate >= @OrderFromDateTime
+				)
+			AND (
+				@OrderToDate IS NULL
+				OR o.ApprovedDate <= @OrderToDateTime
+				)
+			AND (
+				@TentativeDeliveryFromDate IS NULL
+				OR o.TentativeDeliveryDate >= @DeliveryFromDateTime
+				)
+			AND (
+				@TentativeDeliveryToDate IS NULL
+				OR o.TentativeDeliveryDate <= @DeliveryToDateTime
+				)
+			AND (
+				@OrderNo IS NULL
+				OR o.OrderNo LIKE '%' + @OrderNo + '%'
 				)
 
-			AND (
-					@OrderFromDate IS NULL
-					OR o.ApprovedDate >= @OrderFromDateTime
-				)
-
-			AND (
-					@OrderToDate IS NULL
-					OR o.ApprovedDate <= @OrderToDateTime
-				)
-
-			AND (
-					@TentativeDeliveryFromDate IS NULL
-					OR o.TentativeDeliveryDate >= @DeliveryFromDateTime
-				)
-
-			AND (
-					@TentativeDeliveryToDate IS NULL
-					OR o.TentativeDeliveryDate <= @DeliveryToDateTime
-				)
-			AND(@OrderNo IS NULL OR o.OrderNo like '%' + @OrderNo + '%')
 		SELECT o.Id
 			,o.OrderId
 			,o.OrderNo
@@ -304,11 +316,11 @@ BEGIN
 			,o.OrderSetItemId
 			,o.OrderSetItem
 			,COUNT(1) OVER (PARTITION BY 1) AS TotalCount
-		FROM #Temp_Orders o		
+		FROM #Temp_Orders o
 		WHERE (
-			@ModuleName = 'All'
-			OR o.ModuleGroup = @ModuleName
-		)
+				@ModuleName = 'All'
+				OR o.ModuleGroup = @ModuleName
+				)
 		ORDER BY o.IsPinned DESC
 			,CASE 
 				WHEN @SortBy = 'PriorityLabel'
@@ -389,27 +401,21 @@ BEGIN
 				WHEN @SortBy = 'TotalAmount'
 					AND @SortOrder = 'desc'
 					THEN o.TotalAmount
-				END DESC
-				
-		OFFSET(@PageIndex - 1) * @PageSize ROWS
+				END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
+
 		FETCH NEXT @PageSize ROWS ONLY
 	END TRY
 
-	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000)
-		DECLARE @ErrorSeverity INT
-		DECLARE @ErrorState INT
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY()
-			,@ErrorState = ERROR_STATE()
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
-	END CATCH
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+END CATCH
 END
 
 GO

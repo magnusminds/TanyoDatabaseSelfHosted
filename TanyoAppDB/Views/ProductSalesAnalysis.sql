@@ -1,6 +1,5 @@
 
-Create view [dbo].[ProductSalesAnalysis]
-as with cte as(
+Create view [dbo].[ProductSalesAnalysis] as with cte as(
 SELECT 
 osi.CreatedDate as dt,
 p.ProductID,

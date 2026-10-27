@@ -26,14 +26,14 @@ CREATE TABLE [dbo].[Payments] (
 
 GO
 
-CREATE CLUSTERED INDEX [IX_C_Payments_Tenant]
-    ON [dbo].[Payments]([OrderId] ASC, [TenantId] ASC);
+CREATE NONCLUSTERED INDEX [IX_Payments_OrderId_PaymentStatus_IsDeleted_ApprovedDate_PaymentType_PaymentApprovedBy]
+    ON [dbo].[Payments]([OrderId] ASC, [PaymentStatus] ASC, [IsDeleted] ASC, [ApprovedDate] ASC, [PaymentType] ASC, [PaymentApprovedBy] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_Payments_OrderId_PaymentStatus_IsDeleted_ApprovedDate_PaymentType_PaymentApprovedBy]
-    ON [dbo].[Payments]([OrderId] ASC, [PaymentStatus] ASC, [IsDeleted] ASC, [ApprovedDate] ASC, [PaymentType] ASC, [PaymentApprovedBy] ASC) WITH (FILLFACTOR = 80);
+CREATE CLUSTERED INDEX [IX_C_Payments_Tenant]
+    ON [dbo].[Payments]([OrderId] ASC, [TenantId] ASC);
 
 
 GO

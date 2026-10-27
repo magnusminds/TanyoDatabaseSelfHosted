@@ -25,6 +25,7 @@ CREATE TABLE [dbo].[POProducts] (
     [GSTType]               BIT                                                  CONSTRAINT [DF_POProducts_GSTType] DEFAULT ((1)) NOT NULL,
     [IsInterState]          BIT                                                  DEFAULT ((0)) NOT NULL,
     [IGSTAmount]            NUMERIC (18, 2) NULL,
+    [LabelId]               BIGINT                                               NULL,
     PRIMARY KEY CLUSTERED ([POProductId] ASC)
 );
 

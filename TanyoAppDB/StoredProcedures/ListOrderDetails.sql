@@ -1,10 +1,10 @@
-CREATE   PROC [dbo].[ListOrderDetails] (
+CREATE PROC [dbo].[ListOrderDetails] (
 	@TenantID BIGINT
 	,@OrderNo VARCHAR(20) = NULL
 	,@SalesmanId BIGINT = NULL
 	,@CustomerName VARCHAR(100) = NULL
 	,@RefferedBy BIGINT = NULL
-	,@PhoneNumber VARCHAR(15) = NULL
+	,@PhoneNumber VARCHAR(16) = NULL
 	,@OrderType SMALLINT = NULL
 	,@InquiryFromDate DATE = NULL
 	,@InquiryToDate DATE = NULL
@@ -23,56 +23,112 @@ CREATE   PROC [dbo].[ListOrderDetails] (
 	,@SortOrder VARCHAR(10) = 'ASC'
 	,@IsStockOnHold BIT = NULL
 	,@IsArchive BIT = NULL
+	,@RoleId NVARCHAR(MAX) = NULL
+	,@UserId INT = NULL
 	)
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT @OrderNo = NULLIF(LTRIM(RTRIM(@OrderNo)),'')
-	SELECT @SalesmanId = NULLIF(@SalesmanId,-1)
-	SELECT @CustomerName = NULLIF(LTRIM(RTRIM(@CustomerName)),'')
-	SELECT @RefferedBy = NULLIF(@RefferedBy,-1)
-	SELECT @PhoneNumber = NULLIF(LTRIM(RTRIM(@PhoneNumber)),'')
-	SELECT @OrderType = NULLIF(@OrderType,-1)
-	SELECT @Status = NULLIF(LTRIM(RTRIM(@Status)),'')
-	SELECT @LocationID = NULLIF(LTRIM(RTRIM(@LocationID)),'')
-	SELECT @fromPrice = NULLIF(@fromPrice,-1)
-	SELECT @toPrice = NULLIF(@toPrice,-1)
+	BEGIN TRY
+		SELECT @OrderNo = NULLIF(LTRIM(RTRIM(@OrderNo)), '')
 
-	DECLARE @OrderFromDateTime DATETIMEOFFSET = NULL
-		,@OrderToDateTime DATETIMEOFFSET = NULL
-		,@InquiryFromDateTime DATETIME = NULL
-		,@InquiryToDateTime DATETIME = NULL
-		,@DeliveryFromDateTime DATETIMEOFFSET = NULL
-		,@DeliveryToDateTime DATETIMEOFFSET = NULL
-		,@SelectQuery NVARCHAR(MAX) = NULL
-		,@WhereCondition NVARCHAR(MAX) = NULL
-		,@OrderByQuery NVARCHAR(MAX) = NULL
-		,@Query NVARCHAR(MAX) = NULL
-		,@TenantGSTType BIT = 0
-		,@params NVARCHAR(max) = N'@TenantId BIGINT,@SalesmanId BIGINT, @CustomerName VARCHAR(100),
-								@RefferedBy BIGINT, @OrderNo VARCHAR(100), @PhoneNumber VARCHAR(15), 
+		SELECT @SalesmanId = NULLIF(@SalesmanId, - 1)
+
+		SELECT @CustomerName = NULLIF(LTRIM(RTRIM(@CustomerName)), '')
+
+		SELECT @RefferedBy = NULLIF(@RefferedBy, - 1)
+
+		SELECT @PhoneNumber = NULLIF(LTRIM(RTRIM(@PhoneNumber)), '')
+
+		SELECT @OrderType = NULLIF(@OrderType, - 1)
+
+		SELECT @Status = NULLIF(LTRIM(RTRIM(@Status)), '')
+
+		SELECT @LocationID = NULLIF(LTRIM(RTRIM(@LocationID)), '')
+
+		SELECT @fromPrice = NULLIF(@fromPrice, - 1)
+
+		SELECT @toPrice = NULLIF(@toPrice, - 1)
+
+		DECLARE @OrderFromDateTime DATETIMEOFFSET = NULL
+			,@OrderToDateTime DATETIMEOFFSET = NULL
+			,@InquiryFromDateTime DATETIME = NULL
+			,@InquiryToDateTime DATETIME = NULL
+			,@DeliveryFromDateTime DATETIMEOFFSET = NULL
+			,@DeliveryToDateTime DATETIMEOFFSET = NULL
+			,@SelectQuery NVARCHAR(MAX) = NULL
+			,@WhereCondition NVARCHAR(MAX) = NULL
+			,@OrderByQuery NVARCHAR(MAX) = NULL
+			,@Query NVARCHAR(MAX) = NULL
+			,@TenantGSTType BIT = 0
+			,@HasWholesalerPrice BIT = 0
+			,@IsAdmin BIT = 0
+			,@SupperAccess BIT = 0
+			,@params NVARCHAR(max) = N'@TenantId BIGINT,@SalesmanId BIGINT, @CustomerName VARCHAR(100),
+								@RefferedBy BIGINT, @OrderNo VARCHAR(100), @PhoneNumber VARCHAR(16), 
 								@OrderType SMALLINT ,@InquiryFromDateTime DATETIME ,@InquiryToDateTime  DATETIME, 
 								@OrderFromDateTime DATETIMEOFFSET ,@OrderToDateTime DATETIMEOFFSET ,@DeliveryFromDateTime DATETIMEOFFSET, 
 								@DeliveryToDateTime DATETIMEOFFSET ,@Tags BIGINT ,@Status VARCHAR(50),
 								@LocationID VARCHAR(500) ,@toPrice INT ,@fromPrice INT 
-								,@IsStockOnHold BIT,@IsArchive BIT,@TenantGSTType BIT  OUTPUT';
+								,@IsStockOnHold BIT,@IsArchive BIT,@TenantGSTType BIT,@IsAdmin BIT,@SupperAccess BIT,@UserId INT  OUTPUT';
 
-	SELECT @TenantGSTType = GSTType
-	FROM Tenants WITH (NOLOCK)
-	WHERE TenantId = @TenantID;
+		SELECT @HasWholesalerPrice = CASE 
+				WHEN EXISTS (
+						SELECT 1
+						FROM AspNetRoleClaims WITH (NOLOCK)
+						WHERE RoleId = @RoleId
+							AND ClaimValue IN (
+								'Permissions.App.Order.WholeselerPrice'
+								,'Permissions.General.Order.WholeselerPrice'
+								)
+						)
+					THEN 1
+				ELSE 0
+				END
 
-	SELECT @OrderFromDateTime = CAST(@OrderFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
-		,@OrderToDateTime = CAST(@OrderToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30'
-		,@InquiryFromDateTime = CAST(@InquiryFromDate AS VARCHAR(10)) + ' 00:00:00.001'
-		,@InquiryToDateTime = CAST(@InquiryToDate AS VARCHAR(10)) + ' 23:59:59.999'
-		,@DeliveryFromDateTime = CAST(@DeliveryFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
-		,@DeliveryToDateTime = CAST(@DeliveryToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30';
+		SELECT @IsAdmin = CASE 
+				WHEN EXISTS (
+						SELECT 1
+						FROM AspNetRoleClaims WITH (NOLOCK)
+						WHERE RoleId = @RoleId
+							AND ClaimValue IN (
+								'Permissions.App.Order.Approve'
+								,'Permissions.General.Order.Approve'
+								)
+						)
+					THEN 1
+				ELSE 0
+				END
 
+		SELECT @SupperAccess = CASE 
+				WHEN EXISTS (
+						SELECT 1
+						FROM AspNetRoleClaims WITH (NOLOCK)
+						WHERE RoleId = @RoleId
+							AND ClaimValue IN (
+								'Permissions.App.Order.SuperAccess'
+								,'Permissions.General.Order.SuperAccess'
+								)
+						)
+					THEN 1
+				ELSE 0
+				END
 
-	SELECT @SelectQuery = 
-		'SELECT o.OrderId
+		SELECT @TenantGSTType = GSTType
+		FROM Tenants WITH (NOLOCK)
+		WHERE TenantId = @TenantID;
+
+		SELECT @OrderFromDateTime = CAST(@OrderFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
+			,@OrderToDateTime = CAST(@OrderToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30'
+			,@InquiryFromDateTime = CAST(@InquiryFromDate AS VARCHAR(10)) + ' 00:00:00.001'
+			,@InquiryToDateTime = CAST(@InquiryToDate AS VARCHAR(10)) + ' 23:59:59.999'
+			,@DeliveryFromDateTime = CAST(@DeliveryFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
+			,@DeliveryToDateTime = CAST(@DeliveryToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30';
+
+		SELECT @SelectQuery = 
+			'SELECT o.OrderId
 			,ISNULL(o.LabelId, 0) AS LabelID
 			,ISNULL(l.LabelName, '''') AS LabelName
 			,ISNULL(l.ColorCode, '''') AS ColorCode
@@ -89,7 +145,7 @@ BEGIN
 			,ROUND(ISNULL(o.AmountBeforeGST, 0), 0) AS ProductAmount
 			,ROUND(ISNULL(o.CGSTAmount, 0), 0) + ROUND(ISNULL(o.SGSTAmount, 0), 0) AS TaxAmount
 			,ROUND(ISNULL(o.TotalAmt, 0), 0) AS TotalAmount
-			,o.STATUS AS OrderStatus
+			,o.Status AS OrderStatus
 			,FORMAT(o.CreatedDate, '' dd/MM/yyyy '') AS InquiryDate
 			,FORMAT(o.ApprovedDate, '' dd/MM/yyyy '') AS OrderDate
 			,FORMAT(o.DeliveryDate, '' dd/MM/yyyy '') AS DeliveryDate
@@ -114,132 +170,163 @@ BEGIN
 		LEFT JOIN dbo.Locations la WITH (NOLOCK) ON la.LocationID = o.LocationID
 			AND la.TenantID = o.TenantId
 			AND la.IsDeleted = 0'
-		;
+			;
 
-	SELECT @WhereCondition = ' WHERE o.TenantId = @TenantId AND o.Status <> 9';
+		SELECT @WhereCondition = ' WHERE o.TenantId = @TenantId AND o.Status <> 9';
 
-	IF @OrderNo IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.OrderNo LIKE ''%'' + @OrderNo + ''%''';
+		IF @OrderNo IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.OrderNo LIKE ''%'' + @OrderNo + ''%''';
 
-	IF @SalesmanId IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.SalesmanId = @SalesmanId' 
+		IF @SalesmanId IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.SalesmanId = @SalesmanId'
 
-	IF @CustomerName IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND (ISNULL(c.FirstName,'''') + '' '' + ISNULL(c.LastName,'''')) LIKE ''%'' + @CustomerName + ''%''';
+		IF @CustomerName IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND (ISNULL(c.FirstName,'''') + '' '' + ISNULL(c.LastName,'''')) LIKE ''%'' + @CustomerName + ''%''';
 
-	IF @RefferedBy IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.RefferedBy = @RefferedBy' 
+		IF @RefferedBy IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.RefferedBy = @RefferedBy'
 
-	IF @PhoneNumber IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND (c.PhoneNumber LIKE ''%'' + @PhoneNumber + ''%'' OR c.AltPhoneNumber LIKE ''%'' + @PhoneNumber + ''%'')';
+		IF @PhoneNumber IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND (c.PhoneNumber LIKE ''%'' + @PhoneNumber + ''%'' OR c.AltPhoneNumber LIKE ''%'' + @PhoneNumber + ''%'')';
 
-	IF @OrderType IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.OrderType = @OrderType' 
-		
-	IF @InquiryFromDate IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.CreatedDate >= @InquiryFromDateTime '
+		IF @OrderType IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.OrderType = @OrderType'
 
-	IF @InquiryToDate IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.CreatedDate <= @InquiryToDateTime'
+		IF @InquiryFromDate IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.CreatedDate >= @InquiryFromDateTime '
 
-	IF @OrderFromDate IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.ApprovedDate >= @OrderFromDateTime'
+		IF @InquiryToDate IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.CreatedDate <= @InquiryToDateTime'
 
-	IF @OrderToDate IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.ApprovedDate <= @OrderToDateTime'
+		IF @OrderFromDate IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.ApprovedDate >= @OrderFromDateTime'
 
-	IF @DeliveryFromDate IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.DeliveryDate >= @DeliveryFromDateTime'
+		IF @OrderToDate IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.ApprovedDate <= @OrderToDateTime'
 
-	IF @DeliveryToDate IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.DeliveryDate <= @DeliveryToDateTime '
-		
-	IF @Tags IS NULL
-		SET @WhereCondition = @WhereCondition;
-	ELSE IF @Tags = 0
-		SET @WhereCondition = @WhereCondition + ' AND (o.LabelId IS NULL OR o.LabelId = 0)';
-	ELSE IF @Tags <> - 1
-		SET @WhereCondition = @WhereCondition + ' AND o.LabelId = @Tags' 
-		
-	IF @Status IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.Status IN (SELECT value FROM  STRING_SPLIT(@Status, '',''))';
-		
-	IF @LocationID IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.LocationID IN (SELECT value FROM STRING_SPLIT(@LocationID, '',''))';
-		
-	IF @fromPrice IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND (CASE WHEN  @TenantGSTType = 1 THEN ROUND(ISNULL(o.AmountBeforeGST, 0), 0) ELSE ROUND(ISNULL(o.TotalAmt, 0), 0) END) >= @fromPrice' 
+		IF @DeliveryFromDate IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.DeliveryDate >= @DeliveryFromDateTime'
 
-	IF @toPrice IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND (CASE WHEN @TenantGSTType = 1 THEN ROUND(ISNULL(o.AmountBeforeGST, 0), 0) ELSE ROUND(ISNULL(o.TotalAmt, 0), 0) END) <= @toPrice' 
+		IF @DeliveryToDate IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.DeliveryDate <= @DeliveryToDateTime '
 
-	IF @IsStockOnHold IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND (CAST(CASE WHEN sh.OrderId IS NOT NULL THEN 1 ELSE 0 END AS BIT)) = @IsStockOnHold';
-		
-	IF @IsArchive IS NOT NULL
-		SET @WhereCondition = @WhereCondition + ' AND o.IsArchive = @IsArchive' 
+		IF @Tags IS NULL
+			SET @WhereCondition = @WhereCondition;
+		ELSE IF @Tags = 0
+			SET @WhereCondition = @WhereCondition + ' AND (o.LabelId IS NULL OR o.LabelId = 0)';
+		ELSE IF @Tags <> - 1
+			SET @WhereCondition = @WhereCondition + ' AND o.LabelId = @Tags'
 
-	SET @OrderByQuery = ' ORDER BY ';
+		IF @Status IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.Status IN (SELECT value FROM  STRING_SPLIT(@Status, '',''))';
+
+		IF @LocationID IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.LocationID IN (SELECT value FROM STRING_SPLIT(@LocationID, '',''))';
+
+		IF @fromPrice IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND (CASE WHEN  @TenantGSTType = 1 THEN ROUND(ISNULL(o.AmountBeforeGST, 0), 0) ELSE ROUND(ISNULL(o.TotalAmt, 0), 0) END) >= @fromPrice'
+
+		IF @toPrice IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND (CASE WHEN @TenantGSTType = 1 THEN ROUND(ISNULL(o.AmountBeforeGST, 0), 0) ELSE ROUND(ISNULL(o.TotalAmt, 0), 0) END) <= @toPrice'
+
+		IF @IsStockOnHold IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND (CAST(CASE WHEN sh.OrderId IS NOT NULL THEN 1 ELSE 0 END AS BIT)) = @IsStockOnHold';
+
+		IF @IsArchive IS NOT NULL
+			SET @WhereCondition = @WhereCondition + ' AND o.IsArchive = @IsArchive'
+		SET @WhereCondition = @WhereCondition + '
+		AND (
+			@IsAdmin = 1
+			OR (
+				@SupperAccess = 1
+				AND (
+					@OrderType IS NULL
+					OR o.OrderType = @OrderType
+				)
+			)
+			OR (
+				o.SalesmanId = @UserId
+				AND (
+					@OrderType IS NULL
+					OR o.OrderType = @OrderType
+				)
+			)
+		)';
+		SET @OrderByQuery = ' ORDER BY ';
 
 		IF @SortBy = 'OrderNo'
-			SET @OrderByQuery = @OrderByQuery +'o.OrderNo';
+			SET @OrderByQuery = @OrderByQuery + 'o.OrderNo';
 		ELSE IF @SortBy = 'SalesmanName'
 			SET @OrderByQuery = @OrderByQuery + '(au.FirstName + '' '' + au.LastName)';
 		ELSE IF @SortBy = 'CustomerName'
-			SET @OrderByQuery = @OrderByQuery +'(c.FirstName + '' '' + c.LastName)';
+			SET @OrderByQuery = @OrderByQuery + '(c.FirstName + '' '' + c.LastName)';
 		ELSE IF @SortBy = 'PhoneNumber'
 			SET @OrderByQuery = @OrderByQuery + 'ISNULL(c.PhoneNumber, '''')';
 		ELSE IF @SortBy = 'TotalAmount'
-			SET @OrderByQuery = @OrderByQuery +'o.TotalAmt';
+			SET @OrderByQuery = @OrderByQuery + 'o.TotalAmt';
 		ELSE IF @SortBy = 'OrderStatus'
-			SET @OrderByQuery = @OrderByQuery +'o.Status';
+			SET @OrderByQuery = @OrderByQuery + 'o.Status';
 		ELSE IF @SortBy = 'InquiryDate'
-			SET @OrderByQuery = @OrderByQuery +'o.CreatedDate';
+			SET @OrderByQuery = @OrderByQuery + 'o.CreatedDate';
 		ELSE IF @SortBy = 'OrderDate'
-			SET @OrderByQuery = @OrderByQuery +'o.ApprovedDate';
+			SET @OrderByQuery = @OrderByQuery + 'o.ApprovedDate';
 		ELSE IF @SortBy = 'DeliveryDate'
-			SET @OrderByQuery = @OrderByQuery +'o.DeliveryDate';
+			SET @OrderByQuery = @OrderByQuery + 'o.DeliveryDate';
 		ELSE IF @SortBy = 'LocationName'
-			SET @OrderByQuery = @OrderByQuery +'la.LocationName';
+			SET @OrderByQuery = @OrderByQuery + 'la.LocationName';
 		ELSE IF @SortBy = 'OrderProductAmount'
 			SET @OrderByQuery = @OrderByQuery + 'ROUND(ISNULL(o.AmountBeforeGST, 0), 0)';
 		ELSE IF @SortBy = 'TaxAmount'
 			SET @OrderByQuery = @OrderByQuery + '(ROUND(ISNULL(o.CGSTAmount, 0), 0) + ROUND(ISNULL(o.SGSTAmount, 0), 0))';
-		ELSE 
-			SET @OrderByQuery = @OrderByQuery +'o.ApprovedDate';
+		ELSE
+			SET @OrderByQuery = @OrderByQuery + 'o.ApprovedDate';
 
-		IF @SortOrder = 'ASC'            
-		SET @OrderByQuery = @OrderByQuery + ' ASC ';            
-		ELSE IF @SortOrder = 'DESC'            
-		SET @OrderByQuery = @OrderByQuery + ' DESC '; 
+		IF @SortOrder = 'ASC'
+			SET @OrderByQuery = @OrderByQuery + ' ASC ';
+		ELSE IF @SortOrder = 'DESC'
+			SET @OrderByQuery = @OrderByQuery + ' DESC ';
+		SET @OrderByQuery = @OrderByQuery + ' OFFSET (' + CAST(@PageIndex AS VARCHAR(20)) + ' - 1) * ' + CAST(@PageSize AS VARCHAR(20)) + ' ROWS FETCH NEXT ' + CAST(@PageSize AS VARCHAR(20)) + ' ROWS ONLY';
 
-	SET @OrderByQuery = @OrderByQuery + ' OFFSET (' + CAST(@PageIndex AS VARCHAR(20)) + ' - 1) * ' + CAST(@PageSize AS VARCHAR(20)) + ' ROWS FETCH NEXT ' + CAST(@PageSize AS VARCHAR(20)) + ' ROWS ONLY';
+		SELECT @Query = @SelectQuery + @WhereCondition + @OrderByQuery;
 
-	SELECT @Query = @SelectQuery + @WhereCondition + @OrderByQuery;
-	
-	EXEC sp_executesql @Query
-		,@params
-		,@TenantId = @TenantId
-		,@SalesmanId = @SalesmanId
-		,@CustomerName = @CustomerName
-		,@OrderNo = @OrderNo
-		,@PhoneNumber = @PhoneNumber
-		,@RefferedBy = @RefferedBy
-		,@OrderType = @OrderType 
-		,@InquiryFromDateTime = @InquiryFromDateTime
-		,@InquiryToDateTime = @InquiryToDateTime
-		,@OrderFromDateTime = @OrderFromDateTime 
-		,@OrderToDateTime = @OrderToDateTime 
-		,@DeliveryFromDateTime = @DeliveryFromDateTime 
-		,@DeliveryToDateTime = @DeliveryToDateTime 
-		,@Tags = @Tags 
-		,@Status = @Status
-		,@LocationID = @LocationID
-		,@toPrice = @toPrice
-		,@fromPrice = @fromPrice
-		,@IsStockOnHold = @IsStockOnHold
-		,@IsArchive= @IsArchive
-		,@TenantGSTType=@TenantGSTType;
+		EXEC sp_executesql @Query
+			,@params
+			,@TenantId = @TenantId
+			,@SalesmanId = @SalesmanId
+			,@CustomerName = @CustomerName
+			,@OrderNo = @OrderNo
+			,@PhoneNumber = @PhoneNumber
+			,@RefferedBy = @RefferedBy
+			,@OrderType = @OrderType
+			,@InquiryFromDateTime = @InquiryFromDateTime
+			,@InquiryToDateTime = @InquiryToDateTime
+			,@OrderFromDateTime = @OrderFromDateTime
+			,@OrderToDateTime = @OrderToDateTime
+			,@DeliveryFromDateTime = @DeliveryFromDateTime
+			,@DeliveryToDateTime = @DeliveryToDateTime
+			,@Tags = @Tags
+			,@Status = @Status
+			,@LocationID = @LocationID
+			,@toPrice = @toPrice
+			,@fromPrice = @fromPrice
+			,@IsStockOnHold = @IsStockOnHold
+			,@IsArchive = @IsArchive
+			,@TenantGSTType = @TenantGSTType
+			,@IsAdmin = @IsAdmin
+			,@SupperAccess = @SupperAccess
+			,@UserId = @UserId;
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

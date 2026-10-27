@@ -31,3 +31,9 @@ CREATE NONCLUSTERED INDEX [IX_NotificationManagement_TenantId_CreatedDate_Entity
 
 GO
 
+CREATE NONCLUSTERED INDEX [IX_NotificationManagement_WAMessageId]
+    ON [dbo].[NotificationManagement]([WAMessageId] ASC);
+
+
+GO
+

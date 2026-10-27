@@ -49,15 +49,17 @@ BEGIN
         DECLARE @OrderType SMALLINT = CASE WHEN @WholesalerFlag = 1 THEN 2 ELSE 1 END;      
 
         ;WITH LatestFollowUp AS (
-            SELECT OrderId, FollowUpDate, FollowUpComment,
-                   ROW_NUMBER() OVER (PARTITION BY OrderId ORDER BY CreatedDate DESC) AS rn
-            FROM FollowUpOrders WITH (NOLOCK)
+            SELECT fo.OrderId, fo.FollowUpDate, fo.FollowUpComment,
+                   ROW_NUMBER() OVER (PARTITION BY fo.OrderId ORDER BY fo.CreatedDate DESC) AS rn
+            FROM FollowUpOrders fo WITH (NOLOCK)
+            INNER JOIN Orders o WITH (NOLOCK) ON fo.OrderId = o.OrderId
+            WHERE o.TenantId = @TenantID
         )
         SELECT
             o.OrderId,
             o.CustomerID AS CustomerId,
             o.OrderNo,
-            c.FirstName + ' ' + c.LastName AS CustomerName,
+            TRIM(CONCAT(c.FirstName, ' ', c.LastName)) AS CustomerName,
             ROUND(o.AmountBeforeGST + o.CGSTAmount + o.SGSTAmount
                 + ISNULL(o.DeliveryCharges, 0)
                 + CASE
@@ -151,3 +153,6 @@ BEGIN
             @ErrorMsg = @ErrorMsg;
     END CATCH
 END
+
+GO
+

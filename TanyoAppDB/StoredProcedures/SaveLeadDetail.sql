@@ -1,6 +1,6 @@
 CREATE PROC [dbo].[SaveLeadDetail] (
 	@CustomerName VARCHAR(200)
-	,@PhoneNumber VARCHAR(10)
+	,@PhoneNumber VARCHAR(16)
 	,@InquiryFor VARCHAR(200)
 	,@Status INT
 	,@LeadSourceId INT

@@ -75,6 +75,7 @@ BEGIN
 			,d.WarehouseId
 			,IDEW.Name AS WarehouseName
 			,STD.StockTransferDetailId
+			,d.POProductItemId
 		FROM dbo.InwardEntry x
 		LEFT JOIN InwardDetailsEntry d ON x.InwardId = d.InwardId
 			AND d.IsDeleted = 0
@@ -82,10 +83,10 @@ BEGIN
 				SELECT 1
 				FROM dbo.Products p2
 				WHERE p2.ProductId = d.ProductId
-					AND p2.STATUS = 1
+					AND p2.Status = 1
 				)
 		LEFT JOIN dbo.Products p ON p.ProductId = d.ProductId
-			AND p.STATUS = 1
+			AND p.Status = 1
 		LEFT JOIN dbo.Categories c ON c.CategoryId = p.CategoryId
 		LEFT JOIN Warehouse IDEW ON d.WarehouseId = IDEW.Id
 		LEFT JOIN dbo.Vendors vend ON vend.VendorId = x.VendorId

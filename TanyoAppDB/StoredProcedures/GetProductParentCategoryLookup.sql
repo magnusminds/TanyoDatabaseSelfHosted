@@ -20,7 +20,8 @@ BEGIN
                 FROM Categories sub WITH (NOLOCK)
                 WHERE sub.ParentCategoryId = c.CategoryId
                   AND sub.IsDeleted = 0
-            ) THEN 1 ELSE 0 END AS BIT) AS HasSubCategory
+            ) THEN 1 ELSE 0 END AS BIT) AS HasSubCategory,
+            c.CoverImage
         FROM Categories c WITH (NOLOCK)
         WHERE c.ParentCategoryId IS NULL
           AND c.CategoryTypeId = 1

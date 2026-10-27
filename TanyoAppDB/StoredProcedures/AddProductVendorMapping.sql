@@ -1,4 +1,3 @@
-
 CREATE PROCEDURE [dbo].[AddProductVendorMapping]
 (
     @TenantId        BIGINT,
@@ -53,11 +52,11 @@ BEGIN
 
         CREATE TABLE #ProductMappings
         (
-            ProductId          BIGINT PRIMARY KEY,
+            ProductId          BIGINT,
             IsDefault          BIT,
             VendorProductPrice NUMERIC(18,2),
             VendorModelNo      VARCHAR(100),
-            POProductItemId    BIGINT 
+            POProductItemId    BIGINT PRIMARY KEY 
         );
 
         -------------------------------------------------------
@@ -97,7 +96,14 @@ BEGIN
             PVM.UpdatedDate    = @Date,
             PVM.UpdatedUTCDate = @DateUTC
         FROM ProductVendorMapping PVM
-        INNER JOIN #ProductMappings PM
+        INNER JOIN 
+        (
+            SELECT 
+                ProductId,
+                MAX(CAST(IsDefault AS TINYINT)) AS IsDefault
+            FROM #ProductMappings
+            GROUP BY ProductId
+        ) PM
             ON PM.ProductId = PVM.ProductId
         INNER JOIN Products P WITH (NOLOCK)
             ON P.ProductId = PM.ProductId
@@ -133,11 +139,24 @@ BEGIN
             @DateUTC,
             PM.VendorModelNo,
             PM.VendorProductPrice
-        FROM #ProductMappings PM
+        FROM 
+        (
+            SELECT 
+                ProductId,
+                VendorModelNo,
+                VendorProductPrice,
+                IsDefault,
+                ROW_NUMBER() OVER (
+                    PARTITION BY ProductId 
+                    ORDER BY IsDefault DESC, POProductItemId DESC
+                ) AS Rn
+            FROM #ProductMappings
+        ) PM
         INNER JOIN Products P WITH (NOLOCK)
             ON P.ProductId = PM.ProductId
            AND P.TenantId  = @TenantId
-        WHERE NOT EXISTS
+        WHERE PM.Rn = 1
+          AND NOT EXISTS
         (
             SELECT 1
             FROM ProductVendorMapping PVM WITH (NOLOCK)

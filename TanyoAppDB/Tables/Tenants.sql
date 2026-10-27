@@ -4,7 +4,7 @@ CREATE TABLE [dbo].[Tenants] (
     [FirstName]                            VARCHAR (50)       NOT NULL,
     [LastName]                             VARCHAR (50)       NOT NULL,
     [EmailId]                              VARCHAR (50)       NOT NULL,
-    [PhoneNumber]                          VARCHAR (15)       NOT NULL,
+    [PhoneNumber]                          VARCHAR (16)       NOT NULL,
     [LogoPath]                             VARCHAR (500)      NULL,
     [StreetAddress1]                       VARCHAR (150)      NOT NULL,
     [StreetAddress2]                       VARCHAR (150)      NULL,

@@ -67,8 +67,8 @@ BEGIN
 
 	BEGIN CATCH
 		-- Rollback the transaction  
-		IF @@TRANCOUNT > 0
-			ROLLBACK TRAN PopulateProductWarehouseQuantity
+		IF XACT_State() <> 0
+			ROLLBACK TRANSACTION
 
 		DECLARE @ErrorSeverity INT
 

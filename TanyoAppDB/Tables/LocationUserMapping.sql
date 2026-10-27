@@ -9,3 +9,9 @@ CREATE TABLE [dbo].[LocationUserMapping] (
 
 GO
 
+CREATE NONCLUSTERED INDEX [IX_NC_LocationUserMapping_UserId_LocationId]
+    ON [dbo].[LocationUserMapping]([UserID] ASC, [LocationID] ASC);
+
+
+GO
+

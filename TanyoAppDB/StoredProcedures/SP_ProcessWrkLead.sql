@@ -66,7 +66,7 @@ BEGIN
             ,CustomerBehaviorId INT
             ,CustomerAddressId INT
 			,BuyingRangeValueId BIGINT
-			,AlternateMobileNumber VARCHAR(15) 
+			,AlternateMobileNumber NVARCHAR(15) 
 			,InquiryAreaRequirement DECIMAL(18,2)
 			,AlternateSalesmanId BIGINT
 			,ClientMeetingStageId INT
@@ -77,7 +77,7 @@ BEGIN
 	SELECT @TenantId = TenantId
 		,@WrkImportFileID = WrkImportFileID
 		,@CustomerName = CustomerName
-		,@PhoneNumber = RIGHT(TRIM(PhoneNumber), 10)
+		,@PhoneNumber = RIGHT(TRIM(PhoneNumber), 16)
 		,@SalesmanName = SalesmanName
 		,@Address = [Address]
 		,@Status = [LeadStatus]
@@ -180,11 +180,19 @@ BEGIN
 		SET @ErrorMessage = @ErrorMessage + 'First Name only Contain Character. ';
 	END;
 
+	--IF (
+	--				LEN(REPLACE(TRIM(@PhoneNumber), ' ', '')) <> 10
+	--				OR REPLACE(TRIM(@PhoneNumber), ' ', '') LIKE '%[^0-9]%'
+	--		)
+
 	IF (
-					LEN(REPLACE(TRIM(@PhoneNumber), ' ', '')) <> 10
-					OR REPLACE(TRIM(@PhoneNumber), ' ', '') LIKE '%[^0-9]%'
-			)
-			
+        TRIM(@PhoneNumber) = ''
+	    OR TRIM(@PhoneNumber) LIKE '%[^0-9+]%'
+	    OR TRIM(@PhoneNumber) LIKE '_%[+]%'
+	    OR (TRIM(@PhoneNumber) LIKE '+%' AND LEN(TRIM(@PhoneNumber)) > 16)
+	    OR (TRIM(@PhoneNumber) NOT LIKE '+%' AND LEN(TRIM(@PhoneNumber)) > 15)
+	    OR (TRIM(@PhoneNumber) LIKE '+%' AND LEN(TRIM(@PhoneNumber)) < 2)
+	)
 	BEGIN
 		SET @ErrorMessage = @ErrorMessage + 'Invalid phone number exists. ';
 	END

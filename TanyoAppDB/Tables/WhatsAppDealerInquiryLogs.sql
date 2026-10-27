@@ -17,16 +17,16 @@ CREATE TABLE [dbo].[WhatsAppDealerInquiryLogs] (
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_WhatsAppDealerInquiryLogs_TenantId_CreatedDate]
-    ON [dbo].[WhatsAppDealerInquiryLogs]([TenantId] ASC, [CreatedDate] ASC)
-    INCLUDE([DealerCustomerId], [DealerPhone], [DealerName], [ModelNo], [ProductId], [InquiryType], [RequestedQty], [IsAvailable]);
+CREATE NONCLUSTERED INDEX [IX_WhatsAppDealerInquiryLogs_DealerCustomerId_CreatedDate]
+    ON [dbo].[WhatsAppDealerInquiryLogs]([DealerCustomerId] ASC, [CreatedDate] ASC)
+    INCLUDE([ModelNo], [InquiryType], [RequestedQty], [IsAvailable]);
 
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_WhatsAppDealerInquiryLogs_DealerCustomerId_CreatedDate]
-    ON [dbo].[WhatsAppDealerInquiryLogs]([DealerCustomerId] ASC, [CreatedDate] ASC)
-    INCLUDE([ModelNo], [InquiryType], [RequestedQty], [IsAvailable]);
+CREATE NONCLUSTERED INDEX [IX_WhatsAppDealerInquiryLogs_TenantId_CreatedDate]
+    ON [dbo].[WhatsAppDealerInquiryLogs]([TenantId] ASC, [CreatedDate] ASC)
+    INCLUDE([DealerCustomerId], [DealerPhone], [DealerName], [ModelNo], [ProductId], [InquiryType], [RequestedQty], [IsAvailable]);
 
 
 GO

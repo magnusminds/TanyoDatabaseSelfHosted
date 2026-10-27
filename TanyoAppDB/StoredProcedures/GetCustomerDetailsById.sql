@@ -15,7 +15,7 @@ Parameters:
 		@CustomerId = 720
 		,@TenantId = 2
 */
-CREATE   PROCEDURE [dbo].[GetCustomerDetailsById]
+CREATE PROCEDURE [dbo].[GetCustomerDetailsById]
 (
 	@CustomerId BIGINT
 	,@TenantId INT
@@ -96,7 +96,7 @@ BEGIN
 		WHERE c.CustomerId = @CustomerId
 		AND c.TenantId = @TenantId
 		AND c.IsDeleted = 0
-		AND c.CustomerTypeId IN (1, 2) --Customer and Interior
+		AND c.CustomerTypeId IN (1, 2, 4) --Customer and Interior and Dealer( from the whatsapp bot and vedor dealer we created an order so support dealer as 4)
 	END TRY
 
 	BEGIN CATCH

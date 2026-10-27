@@ -1,354 +1,550 @@
-/*  
-EXEC App_List_GetAllLeads  
- @TenantId = 1207  
- ,@CurrentUserId = 13305  
- ,@RoleId = 'A636A96E-93E7-4264-8358-A6CCCBF44088'  
-*/
-CREATE PROCEDURE [dbo].[App_List_GetAllLeads] (
-	@TenantId INT
-	,@CurrentUserId BIGINT
-	,@RoleId NVARCHAR(100)
-	,@CustomerName VARCHAR(200) = NULL
-	,@StatusId INT = NULL
-	,@SalesmanId BIGINT = NULL
-	,@PhoneNumber VARCHAR(50) = NULL
-	,@InquiryFromDate DATE = NULL
-	,@InquiryToDate DATE = NULL
-	,@FollowUpFromDate DATE = NULL
-	,@FollowUpToDate DATE = NULL
-	,@PageNumber INT = 1
-	,@PageSize INT = 25
-	,@SortColumn VARCHAR(50) = 'UpdatedDate'
-	,@SortDirection VARCHAR(4) = 'DESC'
-	,@LeadSourceId BIGINT = NULL
-	,@CustomerId BIGINT = NULL
-	,@LeadNumber VARCHAR(15) = NULL
-	,@PriorityId INT = NULL
-	,@BuyingRangeValueId BIGINT = NULL
-	)
+CREATE
+  PROCEDURE [dbo].[App_List_GetAllLeads]
+(
+    @TenantId               INT,
+    @CurrentUserId          BIGINT,
+    @RoleId                 NVARCHAR(100),
+    @CustomerName           VARCHAR(200) = NULL,
+    @StatusId               INT = NULL,
+    @SalesmanId             BIGINT = NULL,
+    @PhoneNumber            VARCHAR(50) = NULL,
+    @InquiryFromDate        DATE = NULL,
+    @InquiryToDate          DATE = NULL,
+    @FollowUpFromDate       DATE = NULL,
+    @FollowUpToDate         DATE = NULL,
+    @PageNumber              INT = 1,
+    @PageSize                INT = 25,
+    @SortColumn             VARCHAR(50) = 'UpdatedDate',
+    @SortDirection          VARCHAR(4) = 'DESC',
+    @LeadSourceId           BIGINT = NULL,
+    @CustomerId             BIGINT = NULL,
+    @LeadNumber             VARCHAR(15) = NULL,
+    @PriorityId             INT = NULL,
+    @BuyingRangeValueId     BIGINT = NULL
+)
 WITH ENCRYPTION
 AS
 BEGIN
-	SET NOCOUNT ON;
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
-	DECLARE @IsAdmin BIT = 0
-		,@HasSuperAccess BIT = 0;
+    BEGIN TRY
 
-	BEGIN TRY
-		IF EXISTS (
-				SELECT 1
-				FROM AspNetRoles WITH (NOLOCK)
-				WHERE Id = @RoleId
-					AND [Name] = 'Administrator_' + CAST(@TenantId AS VARCHAR(5))
-				)
-			SET @IsAdmin = 1;
+        /* ============================================================
+           Normalize parameters
+           ============================================================ */
 
-		IF EXISTS (
-				SELECT 1
-				FROM AspNetRoleClaims WITH (NOLOCK)
-				WHERE RoleId = @RoleId
-					AND ClaimValue = 'Permissions.App.Lead.SuperAccess'
-				)
-			SET @HasSuperAccess = 1;
+        SET @CustomerName = NULLIF(LTRIM(RTRIM(@CustomerName)), '');
+        SET @PhoneNumber = NULLIF(LTRIM(RTRIM(@PhoneNumber)), '');
+        SET @LeadNumber = NULLIF(LTRIM(RTRIM(@LeadNumber)), '');
+        SET @SortColumn = NULLIF(LTRIM(RTRIM(@SortColumn)), '');
 
-		CREATE TABLE #UserLocations (LocationID INT);
+        IF @PageNumber IS NULL OR @PageNumber < 1
+            SET @PageNumber = 1;
 
-		INSERT INTO #UserLocations (LocationID)
-		SELECT LocationID
-		FROM LocationUserMapping WITH (NOLOCK)
-		WHERE UserId = @CurrentUserId;
+        IF @PageSize IS NULL OR @PageSize < 1
+            SET @PageSize = 25;
 
-		DECLARE @SelectQuery NVARCHAR(MAX)
-			,@WhereQuery NVARCHAR(MAX) = ''
-			,@OrderByQuery NVARCHAR(MAX) = ' ORDER BY '
-			,@FinalQuery NVARCHAR(MAX)
-			,@Params NVARCHAR(MAX);
+        IF @PageSize > 500
+            SET @PageSize = 500;
 
-		SET @SelectQuery = 
-			N'  
- SELECT l.LeadId  
-  ,l.Notes AS Inquiry  
-  ,l.InquiryAbout  
-  ,l.InquiryFor  
-  ,l.RefferedBy  
-  ,ISNULL(custRef.FirstName, '''') + '' '' + ISNULL(custRef.LastName, '''') AS RefferedByName  
-  ,ISNULL(cust.FirstName, l.FirstName) AS FirstName  
-  ,ISNULL(cust.LastName, l.LastName) AS LastName  
-  ,ISNULL(NULLIF(CONCAT (  
-     cust.FirstName  
-     ,'' ''  
-     ,cust.LastName  
-     ), '' ''), CONCAT (  
-    l.FirstName  
-    ,'' ''  
-    ,l.LastName  
-    )) AS CustomerName  
-  ,l.Priority  
-  ,lbl.LabelName AS PriorityLabel  
-  ,lbl.ColorCode AS PriorityColorCode  
-  ,l.CreatedDate AS InquiryDate  
-  ,l.LastContactedDate  
-  ,l.CreatedBy  
-  ,l.SalesmanId AS Salesman  
-  ,l.Status  
-  ,l.Other  
-  ,ISNULL(cust.PhoneNumber, l.PhoneNumber) AS PhoneNumber  
-  ,cust.EmailId AS Email  
-  ,u.FirstName + '' '' + u.LastName AS SalesmanName  
-  ,l.LocationID  
-  ,fu.FollowUpDate  
-  ,fu.FollowUpComment AS FollowUpLastComment  
-  ,l.LeadSourceId  
-  ,COUNT(*) OVER () AS TotalCount  
-  ,0 AS RowNum  
-  ,ISNULL(LKV.LookupValueName, ISNULL(l.Other, '' Other '')) AS LeadSourceName  
-  ,l.CustomerId  
-  ,l.LeadNumber  
-  ,u.IsDeleted AS IsSalesmanDeleted  
-  ,BUY.LookupValueName AS BuyingRangeValue  
-  ,l.BuyingRangeValueId
-  ,l.AlternateMobileNumber
-  ,l.InquiryAreaRequirement
-  ,l.AlternateSalesmanId
-  ,l.ClientMeetingStageId
-  ,l.ArchitectMeetingStageId
-  ,l.LeadType
- FROM Leads l WITH (NOLOCK)  
- LEFT JOIN LookupValues LKV WITH (NOLOCK) ON l.LeadSourceId = LKV.LookupValueId  
- LEFT JOIN Labels lbl WITH (NOLOCK) ON l.Priority = lbl.LabelId  
-  AND lbl.TenantId = @TenantId  
- LEFT JOIN AspNetUsers u WITH (NOLOCK) ON l.SalesmanId = u.UserId  
- LEFT JOIN Customers cust WITH (NOLOCK) ON l.CustomerId = cust.CustomerId  
-  AND cust.TenantId = @TenantId  
- LEFT JOIN Customers custRef WITH (NOLOCK) ON cust.RefferedBy = custRef.CustomerId  
-  AND custRef.TenantId = @TenantId  
- LEFT JOIN LookupValues BUY WITH (NOLOCK) ON l.BuyingRangeValueId = BUY.LookupValueId  
- OUTER APPLY (  
-  SELECT TOP 1 FollowUpDate  
-   ,FollowUpComment  
-  FROM FollowUpLeads f WITH (NOLOCK)  
-  WHERE f.LeadId = l.LeadId  
-  ORDER BY f.FollowUpDate DESC  
-  ) fu  
-    '
-			;
-		SET @WhereQuery = N'  
-    WHERE l.TenantId = @TenantId  
- AND (  
-        (@StatusId IS NULL AND l.Status NOT IN (5,6))  
-        OR  
-        (@StatusId IS NOT NULL AND l.Status = @StatusId)  
-    )  
- AND l.LocationID IS NOT NULL  
- AND EXISTS (  
-  SELECT 1  
-  FROM #UserLocations ul  
-  WHERE ul.LocationID = l.LocationID  
-  )  
- AND (  
-  @IsAdmin = 1  
-  OR @HasSuperAccess = 1  
-  OR l.SalesmanId = @CurrentUserId  
-  )  
-    ';
+        SET @SortDirection =
+            CASE
+                WHEN UPPER(@SortDirection) = 'ASC'
+                    THEN 'ASC'
+                ELSE 'DESC'
+            END;
 
-		IF @CustomerName IS NOT NULL
-			AND LTRIM(RTRIM(@CustomerName)) <> ''
-			SET @WhereQuery += ' AND (cust.FirstName + '' '' + ISNULL(custRef.LastName, '''') LIKE ''%'' + @CustomerName + ''%'')';
 
-		--IF @StatusId IS NOT NULL  
-		-- SET @WhereQuery += ' AND l.Status = @StatusId';  
-		IF @SalesmanId IS NOT NULL
-			AND @SalesmanId <> - 1
-			SET @WhereQuery += ' AND l.SalesmanId = @SalesmanId';
+        /* ============================================================
+           Role permissions
+           ============================================================ */
 
-		IF @PhoneNumber IS NOT NULL
-			SET @WhereQuery += ' AND ISNULL(cust.PhoneNumber, l.PhoneNumber) LIKE ''%'' + @PhoneNumber + ''%''';
+        DECLARE
+            @IsAdmin BIT = 0,
+            @HasSuperAccess BIT = 0;
 
-		IF @InquiryFromDate IS NOT NULL
-			SET @WhereQuery += ' AND l.CreatedDate >= @InquiryFromDate';
+        IF EXISTS
+        (
+            SELECT 1
+            FROM dbo.AspNetRoles WITH (NOLOCK)
+            WHERE Id = @RoleId
+              AND [Name] = 'Administrator_' + CONVERT(VARCHAR(20), @TenantId)
+        )
+        BEGIN
+            SET @IsAdmin = 1;
+        END;
 
-		IF @InquiryToDate IS NOT NULL
-			SET @WhereQuery += ' AND l.CreatedDate <= @InquiryToDate';
+        IF EXISTS
+        (
+            SELECT 1
+            FROM dbo.AspNetRoleClaims WITH (NOLOCK)
+            WHERE RoleId = @RoleId
+              AND ClaimValue = 'Permissions.App.Lead.SuperAccess'
+        )
+        BEGIN
+            SET @HasSuperAccess = 1;
+        END;
 
-		IF @FollowUpFromDate IS NOT NULL
-			SET @WhereQuery += ' AND fu.FollowUpDate >= @FollowUpFromDate';
 
-		IF @FollowUpToDate IS NOT NULL
-			SET @WhereQuery += ' AND fu.FollowUpDate <= @FollowUpToDate';
+        /* ============================================================
+           User locations
 
-		IF @LeadSourceId IS NOT NULL
-			SET @WhereQuery += ' AND l.LeadSourceId = @LeadSourceId';
+           Primary key gives us a clustered index on LocationID.
+           ============================================================ */
 
-		IF @CustomerId IS NOT NULL
-			SET @WhereQuery += ' AND l.CustomerId = @CustomerId';
+        DROP TABLE IF EXISTS #UserLocations;
 
-		IF @LeadNumber IS NOT NULL
-			SET @WhereQuery += ' AND l.LeadNumber LIKE ''%'' + @LeadNumber + ''%''';
+        CREATE TABLE #UserLocations
+        (
+            LocationID BIGINT NOT NULL PRIMARY KEY CLUSTERED
+        );
 
-		IF @PriorityId IS NOT NULL
-			SET @WhereQuery += ' AND l.Priority = @PriorityId';
+        INSERT INTO #UserLocations
+        (
+            LocationID
+        )
+        SELECT DISTINCT
+            LocationID
+        FROM dbo.LocationUserMapping WITH (NOLOCK)
+        WHERE UserID = @CurrentUserId;
 
-		IF @BuyingRangeValueId IS NOT NULL
-			SET @WhereQuery += ' AND l.BuyingRangeValueId = @BuyingRangeValueId';
 
-		IF @SortColumn = 'Priority'
-		BEGIN
-			SET @OrderByquery += 'l.Priority';
-		END
-		ELSE IF @SortColumn = 'Priority'
-		BEGIN
-			SET @OrderByquery += 'l.Priority';
-		END
-		ELSE IF @SortColumn = 'InquiryDate'
-		BEGIN
-			SET @OrderByquery += 'l.CreatedDate';
-		END
-		ELSE IF @SortColumn = 'InquiryDate'
-		BEGIN
-			SET @OrderByquery += 'l.CreatedDate';
-		END
-		ELSE IF @SortColumn = 'Status'
-		BEGIN
-			SET @OrderByquery += 'l.Status';
-		END
-		ELSE IF @SortColumn = 'Status'
-		BEGIN
-			SET @OrderByquery += 'l.Status';
-		END
-		ELSE IF @SortColumn = 'CustomerName'
-		BEGIN
-			SET @OrderByquery += 'ISNULL(NULLIF(CONCAT (  
-       cust.FirstName  
-       ,'' ''  
-       ,cust.LastName  
-       ), ''''), CONCAT (  
-      l.FirstName  
-      ,'' ''  
-      ,l.LastName  
-      ))';
-		END
-		ELSE IF @SortColumn = 'CustomerName'
-		BEGIN
-			SET @OrderByquery += 'ISNULL(NULLIF(CONCAT (  
-       cust.FirstName  
-       ,'' ''  
-       ,cust.LastName  
-       ), ''''), CONCAT (  
-      l.FirstName  
-      ,'' ''  
-      ,l.LastName  
-      ))';
-		END
-		ELSE IF @SortColumn = 'PhoneNumber'
-		BEGIN
-			SET @OrderByquery += 'ISNULL(cust.PhoneNumber, l.PhoneNumber)';
-		END
-		ELSE IF @SortColumn = 'PhoneNumber'
-		BEGIN
-			SET @OrderByquery += 'ISNULL(cust.PhoneNumber, l.PhoneNumber)';
-		END
-		ELSE IF @SortColumn = 'Salesman'
-		BEGIN
-			SET @OrderByquery += 'u.FirstName + '' '' + u.LastName';
-		END
-		ELSE IF @SortColumn = 'Salesman'
-		BEGIN
-			SET @OrderByquery += 'u.FirstName + '' '' + u.LastName';
-		END
-		ELSE IF @SortColumn = 'FollowUpDate'
-		BEGIN
-			SET @OrderByquery += 'fu.FollowUpDate';
-		END
-		ELSE IF @SortColumn = 'FollowUpDate'
-		BEGIN
-			SET @OrderByquery += 'fu.FollowUpDate';
-		END
-		ELSE IF @SortColumn = 'LeadSourceName'
-		BEGIN
-			SET @OrderByquery += 'ISNULL(LKV.LookupValueName, ISNULL(l.Other, ''Other''))';
-		END
-		ELSE IF @SortColumn = 'LeadSourceName'
-		BEGIN
-			SET @OrderByquery += 'ISNULL(LKV.LookupValueName, ISNULL(l.Other, ''Other''))';
-		END
-		ELSE IF @SortColumn = 'LeadNumber'
-		BEGIN
-			SET @OrderByquery += 'l.LeadNumber';
-		END
-		ELSE IF @SortColumn = 'UpdatedDate'
-		BEGIN
-			SET @OrderByquery += 'ISNULL(l.UpdatedDate, l.CreatedDate)';
-		END
-		ELSE
-		BEGIN
-			SET @OrderByquery += 'l.CreatedDate';
-		END
+        /* ============================================================
+           Safe ORDER BY expression
 
-		SET @OrderByquery += ' ' + @SortDirection;
-		SET @OrderByquery += ' OFFSET(' + CAST(@PageNumber AS VARCHAR(20)) + ' - 1) * ' + CAST(@PageSize AS VARCHAR(20)) + ' ROWS FETCH NEXT ' + CAST(@PageSize AS VARCHAR(20)) + ' ROWS ONLY';
-		SET @FinalQuery = @SelectQuery + @WhereQuery + @OrderByQuery;
-		SET @Params = N'  
-        @TenantId INT,  
-        @CurrentUserId BIGINT,  
-        @IsAdmin BIT,  
-        @HasSuperAccess BIT,  
-        @CustomerName VARCHAR(200),  
-        @StatusId INT,  
-        @SalesmanId BIGINT,  
-        @PhoneNumber VARCHAR(50),  
-        @InquiryFromDate DATE,  
-        @InquiryToDate DATE,  
-        @FollowUpFromDate DATE,  
-        @FollowUpToDate DATE,  
-        @LeadSourceId BIGINT,  
-        @SortColumn VARCHAR(50),  
-        @SortDirection VARCHAR(4),  
-        @PageNumber INT,  
-        @PageSize INT,  
-  @CustomerId BIGINT,  
-  @LeadNumber VARCHAR(15),  
-  @PriorityId INT,  
-  @BuyingRangeValueId BIGINT  
-    ';
+           Only predefined expressions are allowed into dynamic SQL.
+           Filter values are always passed as parameters.
+           ============================================================ */
 
-		EXEC sp_executesql @FinalQuery
-			,@Params
-			,@TenantId = @TenantId
-			,@CurrentUserId = @CurrentUserId
-			,@IsAdmin = @IsAdmin
-			,@HasSuperAccess = @HasSuperAccess
-			,@CustomerName = @CustomerName
-			,@StatusId = @StatusId
-			,@SalesmanId = @SalesmanId
-			,@PhoneNumber = @PhoneNumber
-			,@InquiryFromDate = @InquiryFromDate
-			,@InquiryToDate = @InquiryToDate
-			,@FollowUpFromDate = @FollowUpFromDate
-			,@FollowUpToDate = @FollowUpToDate
-			,@LeadSourceId = @LeadSourceId
-			,@SortColumn = @SortColumn
-			,@SortDirection = @SortDirection
-			,@PageNumber = @PageNumber
-			,@PageSize = @PageSize
-			,@CustomerId = @CustomerId
-			,@LeadNumber = @LeadNumber
-			,@PriorityId = @PriorityId
-			,@BuyingRangeValueId = @BuyingRangeValueId;
+        DECLARE @OrderByExpression NVARCHAR(1000);
 
-		DROP TABLE #UserLocations;
-	END TRY
+        SET @OrderByExpression =
+            CASE @SortColumn
 
-	BEGIN CATCH
-		IF OBJECT_ID('tempdb..#UserLocations') IS NOT NULL
-			DROP TABLE #UserLocations;
+                WHEN 'Priority'
+                    THEN N'l.Priority'
 
-		DECLARE @ObjectName VARCHAR(500) = OBJECT_NAME(@@PROCID)
-			,@ErrorMsg VARCHAR(MAX) = ERROR_MESSAGE();
+                WHEN 'InquiryDate'
+                    THEN N'l.CreatedDate'
 
-		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
-			,@ErrorMsg = @ErrorMsg;
-	END CATCH
+                WHEN 'Status'
+                    THEN N'l.Status'
+
+                WHEN 'CustomerName'
+                    THEN N'
+                        ISNULL
+                        (
+                            NULLIF
+                            (
+                                CONCAT(cust.FirstName, '' '', cust.LastName),
+                                '' ''
+                            ),
+                            CONCAT(l.FirstName, '' '', l.LastName)
+                        )'
+
+                WHEN 'PhoneNumber'
+                    THEN N'ISNULL(cust.PhoneNumber, l.PhoneNumber)'
+
+                WHEN 'Salesman'
+                    THEN N'CONCAT(u.FirstName, '' '', u.LastName)'
+
+                WHEN 'FollowUpDate'
+                    THEN N'fu.FollowUpDate'
+
+                WHEN 'LeadSourceName'
+                    THEN N'
+                        ISNULL
+                        (
+                            LKV.LookupValueName,
+                            ISNULL(l.Other, ''Other'')
+                        )'
+
+                WHEN 'LeadNumber'
+                    THEN N'l.LeadNumber'
+
+                WHEN 'UpdatedDate'
+                    THEN N'ISNULL(l.UpdatedDate, l.CreatedDate)'
+
+                ELSE
+                    N'ISNULL(l.UpdatedDate, l.CreatedDate)'
+
+            END;
+
+
+        /* ============================================================
+           Dynamic SQL
+           ============================================================ */
+
+        DECLARE
+            @SQL NVARCHAR(MAX),
+            @Params NVARCHAR(MAX);
+
+
+        /* ============================================================
+           Base query
+
+           Only mandatory filters are placed here.
+           ============================================================ */
+
+        SET @SQL = N'
+SELECT
+      l.LeadId
+    , l.Notes AS Inquiry
+    , l.InquiryAbout
+    , l.InquiryFor
+    , l.RefferedBy
+
+    , ISNULL(custRef.FirstName, '''')
+      +
+      CASE
+          WHEN custRef.LastName IS NULL
+               OR custRef.LastName = ''''
+              THEN ''''
+          ELSE '' '' + custRef.LastName
+      END AS RefferedByName
+
+    , ISNULL(cust.FirstName, l.FirstName) AS FirstName
+    , ISNULL(cust.LastName, l.LastName) AS LastName
+
+    , ISNULL
+      (
+          NULLIF
+          (
+              CONCAT(cust.FirstName, '' '', cust.LastName),
+              '' ''
+          ),
+          CONCAT(l.FirstName, '' '', l.LastName)
+      ) AS CustomerName
+
+    , l.Priority
+    , lbl.LabelName AS PriorityLabel
+    , lbl.ColorCode AS PriorityColorCode
+
+    , l.CreatedDate AS InquiryDate
+    , l.LastContactedDate
+    , l.CreatedBy
+    , l.SalesmanId AS Salesman
+    , l.Status
+    , l.Other
+
+    , ISNULL(cust.PhoneNumber, l.PhoneNumber) AS PhoneNumber
+    , cust.EmailId AS Email
+
+    , CONCAT(u.FirstName, '' '', u.LastName) AS SalesmanName
+
+    , l.LocationID
+
+    , fu.FollowUpDate
+    , fu.FollowUpComment AS FollowUpLastComment
+
+    , l.LeadSourceId
+
+    , COUNT(1) OVER () AS TotalCount
+
+    , 0 AS RowNum
+
+    , ISNULL
+      (
+          LKV.LookupValueName,
+          ISNULL(l.Other, ''Other'')
+      ) AS LeadSourceName
+
+    , l.CustomerId
+    , l.LeadNumber
+    , u.IsDeleted AS IsSalesmanDeleted
+
+    , BUY.LookupValueName AS BuyingRangeValue
+    , l.BuyingRangeValueId
+
+    , l.AlternateMobileNumber
+    , l.InquiryAreaRequirement
+    , l.AlternateSalesmanId
+    , l.ClientMeetingStageId
+    , l.ArchitectMeetingStageId
+    , l.LeadType
+
+FROM dbo.Leads AS l WITH (NOLOCK)
+INNER JOIN dbo.Customers AS cust WITH (NOLOCK)
+    ON cust.CustomerId = l.CustomerId
+   AND cust.TenantId = @TenantId
+
+LEFT JOIN dbo.LookupValues AS LKV WITH (NOLOCK)
+    ON LKV.LookupValueId = l.LeadSourceId
+
+LEFT JOIN dbo.Labels AS lbl WITH (NOLOCK)
+    ON lbl.LabelId = l.Priority
+   AND lbl.TenantId = @TenantId
+
+LEFT JOIN dbo.AspNetUsers AS u WITH (NOLOCK)
+    ON u.UserId = l.SalesmanId
+
+
+LEFT JOIN dbo.Customers AS custRef WITH (NOLOCK)
+    ON custRef.CustomerId = cust.RefferedBy
+   AND custRef.TenantId = @TenantId
+
+LEFT JOIN dbo.LookupValues AS BUY WITH (NOLOCK)
+    ON BUY.LookupValueId = l.BuyingRangeValueId
+
+OUTER APPLY
+(
+    SELECT TOP (1)
+          f.FollowUpDate
+        , f.FollowUpComment
+    FROM dbo.FollowUpLeads AS f WITH (NOLOCK)
+    WHERE f.LeadId = l.LeadId
+    ORDER BY
+          f.FollowUpDate DESC
+        , f.FollowUpLeadId DESC
+) AS fu
+
+WHERE
+    l.TenantId = @TenantId
+
+AND EXISTS
+(
+    SELECT 1
+    FROM #UserLocations AS ul
+    WHERE ul.LocationID = l.LocationID
+)
+';
+
+
+        /* ============================================================
+           Status filter
+
+           NULL  -> exclude statuses 5 and 6
+           Value -> return only requested status
+           ============================================================ */
+
+        IF @StatusId IS NULL
+        BEGIN
+            SET @SQL += N'
+AND l.Status NOT IN (5, 6)';
+        END
+        ELSE
+        BEGIN
+            SET @SQL += N'
+AND l.Status = @StatusId';
+        END;
+
+
+        /* ============================================================
+           Security filter
+
+           Admin / SuperAccess:
+               Can see all salesmen.
+
+           Normal user:
+               Can only see own leads.
+           ============================================================ */
+
+        IF @IsAdmin = 0
+           AND @HasSuperAccess = 0
+        BEGIN
+            SET @SQL += N'
+AND l.SalesmanId = @CurrentUserId';
+        END;
+
+
+        /* ============================================================
+           Optional filters
+           ============================================================ */
+
+        IF @CustomerName IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND
+(
+    ISNULL
+    (
+        NULLIF
+        (
+            CONCAT(cust.FirstName, '' '', cust.LastName),
+            '' ''
+        ),
+        CONCAT(l.FirstName, '' '', l.LastName)
+    ) LIKE ''%'' + @CustomerName + ''%''
+)';
+        END;
+
+
+        IF @SalesmanId IS NOT NULL
+           AND @SalesmanId <> -1
+        BEGIN
+            SET @SQL += N'
+AND l.SalesmanId = @SalesmanId';
+        END;
+
+
+        IF @PhoneNumber IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND ISNULL(cust.PhoneNumber, l.PhoneNumber)
+    LIKE ''%'' + @PhoneNumber + ''%''';
+        END;
+
+
+        IF @InquiryFromDate IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND l.CreatedDate >= @InquiryFromDate';
+        END;
+
+
+        IF @InquiryToDate IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND l.CreatedDate < DATEADD(DAY, 1, @InquiryToDate)';
+        END;
+
+
+        IF @FollowUpFromDate IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND fu.FollowUpDate >= @FollowUpFromDate';
+        END;
+
+
+        IF @FollowUpToDate IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND fu.FollowUpDate < DATEADD(DAY, 1, @FollowUpToDate)';
+        END;
+
+
+        IF @LeadSourceId IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND l.LeadSourceId = @LeadSourceId';
+        END;
+
+
+        IF @CustomerId IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND l.CustomerId = @CustomerId';
+        END;
+
+
+        IF @LeadNumber IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND l.LeadNumber LIKE ''%'' + @LeadNumber + ''%''';
+        END;
+
+
+        IF @PriorityId IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND l.Priority = @PriorityId';
+        END;
+
+
+        IF @BuyingRangeValueId IS NOT NULL
+        BEGIN
+            SET @SQL += N'
+AND l.BuyingRangeValueId = @BuyingRangeValueId';
+        END;
+
+
+        /* ============================================================
+           Ordering + Pagination
+
+           LeadId is used as a deterministic tie-breaker.
+           ============================================================ */
+
+        SET @SQL += N'
+
+ORDER BY
+      ' + @OrderByExpression + N' ' + @SortDirection + N'
+    , l.LeadId DESC
+
+OFFSET
+    (@PageNumber - 1) * @PageSize ROWS
+
+FETCH NEXT
+    @PageSize ROWS ONLY
+;
+';
+
+
+        /* ============================================================
+           Parameters
+           ============================================================ */
+
+        SET @Params = N'
+              @TenantId               INT
+            , @CurrentUserId          BIGINT
+            , @IsAdmin                BIT
+            , @HasSuperAccess         BIT
+            , @CustomerName           VARCHAR(200)
+            , @StatusId               INT
+            , @SalesmanId             BIGINT
+            , @PhoneNumber            VARCHAR(50)
+            , @InquiryFromDate        DATE
+            , @InquiryToDate          DATE
+            , @FollowUpFromDate       DATE
+            , @FollowUpToDate         DATE
+            , @LeadSourceId           BIGINT
+            , @CustomerId             BIGINT
+            , @LeadNumber             VARCHAR(15)
+            , @PriorityId             INT
+            , @BuyingRangeValueId     BIGINT
+            , @PageNumber             INT
+            , @PageSize               INT
+';
+
+
+        /* ============================================================
+           Execute
+           ============================================================ */
+
+        EXEC sys.sp_executesql
+              @SQL
+            , @Params
+            , @TenantId = @TenantId
+            , @CurrentUserId = @CurrentUserId
+            , @IsAdmin = @IsAdmin
+            , @HasSuperAccess = @HasSuperAccess
+            , @CustomerName = @CustomerName
+            , @StatusId = @StatusId
+            , @SalesmanId = @SalesmanId
+            , @PhoneNumber = @PhoneNumber
+            , @InquiryFromDate = @InquiryFromDate
+            , @InquiryToDate = @InquiryToDate
+            , @FollowUpFromDate = @FollowUpFromDate
+            , @FollowUpToDate = @FollowUpToDate
+            , @LeadSourceId = @LeadSourceId
+            , @CustomerId = @CustomerId
+            , @LeadNumber = @LeadNumber
+            , @PriorityId = @PriorityId
+            , @BuyingRangeValueId = @BuyingRangeValueId
+            , @PageNumber = @PageNumber
+            , @PageSize = @PageSize;
+
+
+        DROP TABLE #UserLocations;
+
+    END TRY
+
+    BEGIN CATCH
+
+        IF OBJECT_ID('tempdb..#UserLocations') IS NOT NULL
+            DROP TABLE #UserLocations;
+
+        DECLARE
+            @ObjectName VARCHAR(500) = OBJECT_NAME(@@PROCID),
+            @ErrorMsg VARCHAR(MAX) = ERROR_MESSAGE();
+
+        EXEC dbo.SaveDBErrorLog
+              @ObjectName = @ObjectName
+            , @ErrorMsg = @ErrorMsg;
+
+        THROW;
+
+    END CATCH
 END
 
 GO

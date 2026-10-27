@@ -1,74 +1,222 @@
-/*
-	EXEC [dbo].[ListPORawMaterials]
-		@TenantId = 125
-*/
-CREATE   PROC [dbo].[ListPORawMaterials]
-(
-	@TenantId BIGINT,
-	@VendorId BIGINT = NULL,
-	@PONumber VARCHAR(50) = NULL,
-	@OrderFromDate DATE = NULL,
-	@OrderToDate DATE = NULL,
-	@Status INT = NULL,
-	@PageIndex INT = 1,
-	@PageSize INT = 10,
-	@SortBy NVARCHAR(50) = 'OrderDate',
-	@SortOrder NVARCHAR(4) = 'DESC'
-)
+CREATE PROCEDURE [dbo].[ListPORawMaterials] 
+	 @TenantID BIGINT
+	,@VendorId BIGINT = NULL
+	,@PONumber VARCHAR(100) = NULL
+	,@OrderFromDate DATE = NULL
+	,@OrderToDate DATE = NULL
+	,@Status VARCHAR(100) = NULL
+	,@PageIndex INT = 1
+	,@PageSize INT = 10
+	,@SortBy VARCHAR(50) = 'OrderDate'
+	,@SortOrder VARCHAR(10) = 'DESC'
+	,@PaymentStatus VARCHAR(32) = NULL
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT p.PORawMaterialId
-		,v.VendorName
-		,p.PONumber
-		,p.OrderDate AS OrderDate
-		,p.Status
-		,COUNT(i.PORawMaterialItemId) AS TotalPORawMaterialItems
-		,ISNULL(uUpdated.FirstName + ' ' + uUpdated.LastName, uCreated.FirstName + ' ' + uCreated.LastName) AS LastModifiedBy
-		,ISNULL(p.UpdatedDate, p.CreatedDate) AS LastModifiedDate
-		,CASE 
-			WHEN p.Status = 1 THEN 'Pending'
-			WHEN p.Status = 2 THEN 'InProgress'
-			WHEN p.Status = 3 THEN 'Completed'
-			ELSE ''
-		 END AS StatusName
-		 ,MAX(p.TotalAmount) AS TotalAmount
-		,COUNT(1) OVER() AS TotalCount
-	FROM dbo.PORawMaterials p WITH (NOLOCK)
-	INNER JOIN dbo.Vendors v WITH (NOLOCK) ON p.VendorId = v.VendorId
-	LEFT JOIN dbo.PORawMaterialItems i WITH (NOLOCK) ON p.PORawMaterialId = i.PORawMaterialId
-	LEFT JOIN dbo.AspNetUsers uCreated WITH (NOLOCK) ON p.CreatedBy = uCreated.UserId
-	LEFT JOIN dbo.AspNetUsers uUpdated WITH (NOLOCK) ON p.UpdatedBy = uUpdated.UserId
-	WHERE p.IsDeleted = 0
-	AND p.TenantId = @TenantId
-	AND (@VendorId IS NULL OR p.VendorId = @VendorId)
-	AND (@PONumber IS NULL OR p.PONumber LIKE '%' + @PONumber + '%')
-	AND (@OrderFromDate IS NULL OR p.OrderDate >= @OrderFromDate)
-	AND (@OrderToDate IS NULL OR p.OrderDate <= @OrderToDate)
-	AND (@Status IS NULL OR p.Status = @Status)
-	GROUP BY 
-		p.PORawMaterialId, v.VendorName, p.PONumber, p.OrderDate, p.Status,
-		p.CreatedDate, p.UpdatedDate, uCreated.FirstName, uCreated.LastName,
-		uUpdated.FirstName, uUpdated.LastName
-	ORDER BY 
-		CASE WHEN @SortBy = 'VendorName' AND @SortOrder = 'ASC' THEN v.VendorName END ASC
-		,CASE WHEN @SortBy = 'VendorName' AND @SortOrder = 'DESC' THEN v.VendorName END DESC
-		,CASE WHEN @SortBy = 'PONumber' AND @SortOrder = 'ASC' THEN p.PONumber END ASC
-		,CASE WHEN @SortBy = 'PONumber' AND @SortOrder = 'DESC' THEN p.PONumber END DESC
-		,CASE WHEN @SortBy = 'OrderDate' AND @SortOrder = 'ASC' THEN p.OrderDate END ASC
-		,CASE WHEN @SortBy = 'OrderDate' AND @SortOrder = 'DESC' THEN p.OrderDate END DESC
-		,CASE WHEN @SortBy = 'Status' AND @SortOrder = 'ASC' THEN p.Status END ASC
-		,CASE WHEN @SortBy = 'Status' AND @SortOrder = 'DESC' THEN p.Status END DESC
-		,CASE WHEN @SortBy = 'LastModifiedDate' AND @SortOrder = 'ASC' THEN ISNULL(p.UpdatedDate, p.CreatedDate) END ASC
-		,CASE WHEN @SortBy = 'LastModifiedDate' AND @SortOrder = 'DESC' THEN ISNULL(p.UpdatedDate, p.CreatedDate) END DESC
-		,CASE WHEN @SortBy = 'LastModifiedBy' AND @SortOrder = 'ASC' THEN ISNULL(uUpdated.FirstName + ' ' + uUpdated.LastName, uCreated.FirstName + ' ' + uCreated.LastName) END ASC
-		,CASE WHEN @SortBy = 'LastModifiedBy' AND @SortOrder = 'DESC' THEN ISNULL(uUpdated.FirstName + ' ' + uUpdated.LastName, uCreated.FirstName + ' ' + uCreated.LastName) END DESC
-		,CASE WHEN @SortBy = 'TotalAmount' AND @SortOrder = 'ASC' THEN MAX(p.TotalAmount) END ASC
-		,CASE WHEN @SortBy = 'TotalAmount' AND @SortOrder = 'DESC' THEN MAX(p.TotalAmount) END DESC
-	OFFSET (@PageIndex - 1) * @PageSize ROWS
-	FETCH NEXT @PageSize ROWS ONLY
+	BEGIN TRY
+			;
+
+		WITH PaymentCTE
+		AS (
+			SELECT p.PORawMaterialId
+				,SUM(CASE 
+						WHEN p.PaymentStatus = 1
+							AND p.IsDeleted = 0
+							THEN ISNULL(p.ReceivedAmount, 0)
+						ELSE 0
+						END) AS AdvanceAmount
+			FROM [dbo].[PORawMaterialPayment] p
+			GROUP BY p.PORawMaterialId
+			)
+			,Base
+		AS (
+			SELECT rm.PORawMaterialId
+				,rm.PONumber
+				,rm.OrderDate
+				,rm.VendorId
+				,ISNULL(v.VendorName, '') AS VendorName
+				,ISNULL(v.VendorCode, '') AS VendorCode
+				,rm.Status
+				,ISNULL(rm.TotalAmount, 0) AS TotalAmount
+				,ISNULL(p.AdvanceAmount, 0) AS AdvanceAmount
+				,ISNULL(rm.TotalAmount, 0) - ISNULL(p.AdvanceAmount, 0) AS RemainingAmount
+				,CASE 
+					WHEN ISNULL(rm.TotalAmount, 0) <= 0
+						THEN 'Unpaid'
+					WHEN ISNULL(p.AdvanceAmount, 0) >= ISNULL(rm.TotalAmount, 0)
+						THEN 'Paid'
+					WHEN ISNULL(p.AdvanceAmount, 0) > 0
+						THEN 'Partially Paid'
+					ELSE 'Unpaid'
+					END AS PaymentStatus
+				,CASE rm.Status
+					WHEN 1
+						THEN 'Pending'
+					WHEN 2
+						THEN 'Approved'
+					WHEN 3
+						THEN 'Cancelled'
+					WHEN 4
+						THEN 'Completed'
+					WHEN 5
+						THEN 'Material Ready'
+					ELSE ''
+					END AS StatusName
+				,(
+					SELECT COUNT(*)
+					FROM [dbo].[PORawMaterialItems] i
+					WHERE i.PORawMaterialId = rm.PORawMaterialId
+					) AS TotalPORawMaterialItems
+				,LTRIM(RTRIM(ISNULL(COALESCE(u1.FirstName + ' ' + u1.LastName, u1.UserName, u2.FirstName + ' ' + u2.LastName, u2.UserName), ''))) AS LastModifiedBy
+				,COALESCE(rm.UpdatedDate, rm.CreatedDate) AS LastModifiedDate
+			FROM [dbo].[PORawMaterials] rm
+			LEFT JOIN [dbo].[Vendors] v ON v.VendorId = rm.VendorId
+			LEFT JOIN PaymentCTE p ON p.PORawMaterialId = rm.PORawMaterialId
+			LEFT JOIN [dbo].[AspNetUsers] u1 ON u1.UserId = rm.UpdatedBy
+			LEFT JOIN [dbo].[AspNetUsers] u2 ON u2.UserId = rm.CreatedBy
+			WHERE rm.TenantId = @TenantID
+				AND rm.IsDeleted = 0
+				AND (
+					@VendorId IS NULL
+					OR rm.VendorId = @VendorId
+					)
+				AND (
+					@PONumber IS NULL
+					OR rm.PONumber LIKE '%' + @PONumber + '%'
+					)
+				AND (
+					@OrderFromDate IS NULL
+					OR CAST(rm.OrderDate AS DATE) >= @OrderFromDate
+					)
+				AND (
+					@OrderToDate IS NULL
+					OR CAST(rm.OrderDate AS DATE) <= @OrderToDate
+					)
+				AND (
+					@Status IS NULL
+					OR rm.Status IN (
+						SELECT CAST(RTRIM(LTRIM(value)) AS INT)
+						FROM STRING_SPLIT(@Status, ',')
+						WHERE RTRIM(LTRIM(value)) <> ''
+						)
+					)
+				AND (
+					@PaymentStatus IS NULL
+					OR (
+						CASE 
+							WHEN ISNULL(rm.TotalAmount, 0) <= 0
+								THEN 'Unpaid'
+							WHEN ISNULL(p.AdvanceAmount, 0) >= ISNULL(rm.TotalAmount, 0)
+								THEN 'Paid'
+							WHEN ISNULL(p.AdvanceAmount, 0) > 0
+								THEN 'Partially Paid'
+							ELSE 'Unpaid'
+							END
+						) = @PaymentStatus
+					)
+			)
+			,Ranked
+		AS (
+			SELECT b.*
+				,ROW_NUMBER() OVER (
+					ORDER BY CASE 
+							WHEN @SortBy = 'PONumber'
+								AND UPPER(@SortOrder) = 'ASC'
+								THEN b.PONumber
+							END ASC
+						,CASE 
+							WHEN @SortBy = 'PONumber'
+								AND UPPER(@SortOrder) = 'DESC'
+								THEN b.PONumber
+							END DESC
+						,CASE 
+							WHEN @SortBy = 'VendorName'
+								AND UPPER(@SortOrder) = 'ASC'
+								THEN b.VendorName
+							END ASC
+						,CASE 
+							WHEN @SortBy = 'VendorName'
+								AND UPPER(@SortOrder) = 'DESC'
+								THEN b.VendorName
+							END DESC
+						,CASE 
+							WHEN @SortBy = 'Status'
+								AND UPPER(@SortOrder) = 'ASC'
+								THEN b.Status
+							END ASC
+						,CASE 
+							WHEN @SortBy = 'Status'
+								AND UPPER(@SortOrder) = 'DESC'
+								THEN b.Status
+							END DESC
+						,CASE 
+							WHEN @SortBy = 'LastModifiedBy'
+								AND UPPER(@SortOrder) = 'ASC'
+								THEN b.LastModifiedBy
+							END ASC
+						,CASE 
+							WHEN @SortBy = 'LastModifiedBy'
+								AND UPPER(@SortOrder) = 'DESC'
+								THEN b.LastModifiedBy
+							END DESC
+						,CASE 
+							WHEN @SortBy = 'LastModifiedDate'
+								AND UPPER(@SortOrder) = 'ASC'
+								THEN b.LastModifiedDate
+							END ASC
+						,CASE 
+							WHEN @SortBy = 'LastModifiedDate'
+								AND UPPER(@SortOrder) = 'DESC'
+								THEN b.LastModifiedDate
+							END DESC
+						,CASE 
+							WHEN @SortBy = 'OrderDate'
+								AND UPPER(@SortOrder) = 'ASC'
+								THEN b.OrderDate
+							END ASC
+						,CASE 
+							WHEN @SortBy = 'OrderDate'
+								AND UPPER(@SortOrder) = 'DESC'
+								THEN b.OrderDate
+							END DESC
+					) AS RowNum
+				,COUNT(*) OVER () AS TotalCount
+			FROM Base b
+			)
+		SELECT PORawMaterialId
+			,PONumber
+			,OrderDate
+			,VendorId
+			,VendorName
+			,VendorCode
+			,Status
+			,StatusName
+			,TotalAmount
+			,AdvanceAmount
+			,RemainingAmount
+			,PaymentStatus
+			,TotalPORawMaterialItems
+			,LastModifiedBy
+			,LastModifiedDate
+			,TotalCount
+		FROM Ranked
+		WHERE RowNum > ((@PageIndex - 1) * @PageSize)
+			AND RowNum <= (@PageIndex * @PageSize)
+		ORDER BY RowNum;
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

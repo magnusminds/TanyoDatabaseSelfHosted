@@ -19,16 +19,16 @@ CREATE TABLE [dbo].[StockOnHold] (
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_NC_StockOnHold_cover]
+CREATE NONCLUSTERED INDEX [IX_StockOnHold_OrderSetItemId]
     ON [dbo].[StockOnHold]([OrderSetItemId] ASC)
-    INCLUDE([ProductId], [Quantity], [OrderId]);
+    INCLUDE([ProductId], [IsStockOnHold], [TimePeriod], [CreatedDate], [Quantity], [OrderId]);
 
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_StockOnHold_OrderSetItemId]
+CREATE NONCLUSTERED INDEX [IX_NC_StockOnHold_cover]
     ON [dbo].[StockOnHold]([OrderSetItemId] ASC)
-    INCLUDE([ProductId], [IsStockOnHold], [TimePeriod], [CreatedDate], [Quantity], [OrderId]);
+    INCLUDE([ProductId], [Quantity], [OrderId]);
 
 
 GO

@@ -81,12 +81,30 @@ BEGIN
 			SET @ErrorMessage = 'This record already exists. ';
 		END
 
-		IF @PrimaryContactNumber IS NULL
-			OR @PrimaryContactNumber NOT LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-			SET @ErrorMessage = @ErrorMessage + 'Primary Contact Number is not in the correct format or blank. ';
+        IF ISNULL(TRIM(@PrimaryContactNumber), '') = ''
+		BEGIN
+			SET @ErrorMessage = @ErrorMessage + 'Primary Contact Number is blank. ';
+		END
 
-		IF ISNULL(@AlternateContactNumber, '') <> ''
-			AND @AlternateContactNumber NOT LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+        IF (
+			TRIM(@PrimaryContactNumber) LIKE '%[^0-9+]%'
+			OR TRIM(@PrimaryContactNumber) LIKE '_%[+]%'
+			OR (TRIM(@PrimaryContactNumber) LIKE '+%' AND LEN(TRIM(@PrimaryContactNumber)) > 16)
+			OR (TRIM(@PrimaryContactNumber) NOT LIKE '+%' AND LEN(TRIM(@PrimaryContactNumber)) > 15)
+			OR (TRIM(@PrimaryContactNumber) LIKE '+%' AND LEN(TRIM(@PrimaryContactNumber)) < 2)
+		)
+		BEGIN
+			SET @ErrorMessage = @ErrorMessage + 'Primary Contact Number is not in the correct format. ';
+		END
+
+        IF ISNULL(TRIM(@AlternateContactNumber), '') <> ''
+			AND (
+				TRIM(@AlternateContactNumber) LIKE '%[^0-9+]%'
+				OR TRIM(@AlternateContactNumber) LIKE '_%[+]%'
+				OR (TRIM(@AlternateContactNumber) LIKE '+%' AND LEN(TRIM(@AlternateContactNumber)) > 16)
+				OR (TRIM(@AlternateContactNumber) NOT LIKE '+%' AND LEN(TRIM(@AlternateContactNumber)) > 15)
+				OR (TRIM(@AlternateContactNumber) LIKE '+%' AND LEN(TRIM(@AlternateContactNumber)) < 2)
+			)
 		BEGIN
 			SET @ErrorMessage = @ErrorMessage + 'Alternate Contact Number is not in the correct format. ';
 		END

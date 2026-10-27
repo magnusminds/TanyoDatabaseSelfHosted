@@ -2,7 +2,7 @@ CREATE TABLE [dbo].[Locations] (
     [LocationID]     BIGINT             IDENTITY (1, 1) NOT NULL,
     [LocationName]   VARCHAR (100)      NOT NULL,
     [Address]        VARCHAR (500)      NULL,
-    [PhoneNumber]    VARCHAR (15)       NULL,
+    [PhoneNumber]    VARCHAR (16)       NULL,
     [TenantID]       INT                NOT NULL,
     [IsDeleted]      BIT                DEFAULT ((0)) NOT NULL,
     [CreatedBy]      INT                NOT NULL,

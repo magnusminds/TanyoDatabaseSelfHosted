@@ -12,13 +12,16 @@
   ,@PageSize  = 25      
   ,@SortBy = 'LastCreatedOn'      
   ,@SortOrder  = 'DESC'      
-  ,@InquiryFor = NULL    
-  ,@BuyingRangeValueId = NULL  
-*/
+   ,@InquiryFor = NULL    
+   ,@BuyingRangeValueId = NULL  
+   ,@CreatedFromDate = NULL
+   ,@CreatedToDate = NULL
+   ,@PipelineType = NULL
+ */
 CREATE PROC [dbo].[ListLeadDetails] (
 	@TenantId BIGINT
 	,@CustomerName VARCHAR(50) = NULL
-	,@PhoneNumber VARCHAR(10) = NULL
+	,@PhoneNumber VARCHAR(16) = NULL
 	,@SalesmanId BIGINT = NULL
 	,@LeadSourceId BIGINT = NULL
 	,@Status INT = NULL
@@ -30,6 +33,9 @@ CREATE PROC [dbo].[ListLeadDetails] (
 	,@SortOrder VARCHAR(10) = 'DESC'
 	,@InquiryFor VARCHAR(100) = NULL
 	,@BuyingRangeValueId BIGINT = NULL
+	,@CreatedFromDate DATE = NULL
+	,@CreatedToDate DATE = NULL
+	,@PipelineType INT = NULL
 	)
 WITH ENCRYPTION
 AS
@@ -76,6 +82,27 @@ BEGIN
 			,l.ClientMeetingStageId
 			,l.ArchitectMeetingStageId
 			,l.LeadType
+			,CASE 
+				WHEN ISNULL(l.LeadType, 0) = 0
+					AND au.FieldStoreOperationType = 1
+					THEN 'Field Pipeline'
+				WHEN ISNULL(l.LeadType, 0) = 0
+					AND au.FieldStoreOperationType IN (
+						2
+						,3
+						)
+					THEN 'Sales Pipeline'
+				WHEN ISNULL(l.LeadType, 0) = 1
+					AND au.FieldStoreOperationType IN (
+						2
+						,3
+						)
+					THEN 'Architects Visit - Store'
+				WHEN ISNULL(l.LeadType, 0) = 1
+					AND au.FieldStoreOperationType = 1
+					THEN 'Architects Visit - Field'
+				ELSE ''
+				END AS PipelineName
 			,COUNT(1) OVER () AS TotalCount
 		FROM dbo.Leads l WITH (NOLOCK)
 		LEFT JOIN dbo.Customers AS c WITH (NOLOCK) ON l.CustomerId = c.CustomerId
@@ -141,6 +168,43 @@ BEGIN
 			AND (
 				@BuyingRangeValueId IS NULL
 				OR l.BuyingRangeValueId = @BuyingRangeValueId
+				)
+			AND (
+				@CreatedFromDate IS NULL
+				OR l.CreatedDate >= @CreatedFromDate
+				)
+			AND (
+				@CreatedToDate IS NULL
+				OR l.CreatedDate < DATEADD(DAY, 1, @CreatedToDate)
+				)
+			AND (
+				@PipelineType IS NULL
+				OR (
+					@PipelineType = 1
+					AND ISNULL(l.LeadType, 0) = 0
+					AND au.FieldStoreOperationType = 1
+					)
+				OR (
+					@PipelineType = 2
+					AND ISNULL(l.LeadType, 0) = 0
+					AND au.FieldStoreOperationType IN (
+						2
+						,3
+						)
+					)
+				OR (
+					@PipelineType = 3
+					AND ISNULL(l.LeadType, 0) = 1
+					AND au.FieldStoreOperationType IN (
+						2
+						,3
+						)
+					)
+				OR (
+					@PipelineType = 4
+					AND ISNULL(l.LeadType, 0) = 1
+					AND au.FieldStoreOperationType = 1
+					)
 				)
 		ORDER BY CASE 
 				WHEN @SortBy = 'CustomerName'
@@ -231,11 +295,9 @@ BEGIN
 				WHEN @SortBy = 'LastModifiedOn'
 					AND @SortOrder = 'DESC'
 					THEN ISNULL(l.UpdatedDate, l.CreatedDate)
-				END DESC 
+				END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
 
-		OFFSET(@PageIndex - 1) * @PageSize ROWS
 		FETCH NEXT @PageSize ROWS ONLY;
-
 	END TRY
 
 	BEGIN CATCH

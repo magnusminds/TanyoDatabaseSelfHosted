@@ -31,20 +31,42 @@ BEGIN
 		DECLARE @MonthStart DATETIME = DATEFROMPARTS(@Year, @Month, 1);
 		DECLARE @MonthEnd DATETIME = EOMONTH(@MonthStart);
 		DECLARE @Today DATE = CAST(GETDATE() AS DATE);
-		-- Working days elapsed: full month when viewing a past month,
-		-- day-of-month when viewing current month, 0 for future months.
-		DECLARE @WorkingDays INT = CASE 
+		DECLARE @RangeEnd DATE = CASE 
 				WHEN @Year < YEAR(@Today)
 					OR (
 						@Year = YEAR(@Today)
 						AND @Month < MONTH(@Today)
 						)
-					THEN DAY(@MonthEnd)
+					THEN CAST(@MonthEnd AS DATE)
 				WHEN @Year = YEAR(@Today)
 					AND @Month = MONTH(@Today)
-					THEN DAY(@Today)
-				ELSE 0
-				END;;
+					THEN @Today
+				ELSE @Today -- future months: 0 via CASE below
+				END;
+		-- Working days = weekdays (Mon-Fri) only, excludes weekends
+		DECLARE @WorkingDays INT = CASE 
+				WHEN @Year > YEAR(@Today)
+					OR (
+						@Year = YEAR(@Today)
+						AND @Month > MONTH(@Today)
+						)
+					THEN 0
+				ELSE (
+						SELECT COUNT(*)
+						FROM (
+							SELECT TOP (DATEDIFF(DAY, @MonthStart, @RangeEnd) + 1) DATEADD(DAY, ROW_NUMBER() OVER (
+										ORDER BY (
+												SELECT NULL
+												)
+										) - 1, @MonthStart) AS d
+							FROM sys.objects
+							) days
+						WHERE DATEPART(WEEKDAY, days.d) NOT IN (
+								1
+								,7
+								)
+						)
+				END;
 
 		WITH Reps
 		AS (
@@ -113,8 +135,7 @@ BEGIN
 				,COUNT(DISTINCT CAST(a.StartDate AS DATE)) AS PresentDays
 			FROM dbo.Attendance a WITH (NOLOCK)
 			WHERE a.Type = 0 -- Punching (not Break)
-				AND YEAR(a.StartDate) = @Year
-				AND MONTH(a.StartDate) = @Month
+				AND CAST(a.StartDate AS DATE) = @Today
 			GROUP BY a.UserId
 			)
 			,FollowUpsPerRep
@@ -136,14 +157,14 @@ BEGIN
 			)
 			,TargetPerRep
 		AS (
-			SELECT st.UserId
-				,SUM(st.TargetAmount) AS MonthlyTarget
-			FROM dbo.SalesTargets st WITH (NOLOCK)
-			WHERE st.TenantId = @TenantId
-				AND st.Month = @Month
-				AND st.Year = @Year
-				AND st.IsDeleted = 0
-			GROUP BY st.UserId
+			SELECT u.UserId
+				,ISNULL(u.SalesTarget, 0) AS MonthlyTarget
+			FROM dbo.AspNetUsers u WITH (NOLOCK)
+			JOIN dbo.UserTenantMapping utm WITH (NOLOCK) ON utm.UserId = u.UserId
+			WHERE utm.TenantId = @TenantId
+				AND utm.IsDeleted = 0
+				AND u.IsActive = 1
+				AND u.IsDeleted = 0
 			)
 		SELECT rp.UserId
 			,rp.RepName

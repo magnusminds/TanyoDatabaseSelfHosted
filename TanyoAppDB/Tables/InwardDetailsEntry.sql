@@ -17,6 +17,7 @@ CREATE TABLE [dbo].[InwardDetailsEntry] (
     [OrderSetItemId]        BIGINT             NULL,
     [AudioURL]              VARCHAR (MAX)      NULL,
     [STOCKTRANSFERDETAILID] INT                NULL,
+    [POProductItemId]       BIGINT             NULL,
     CONSTRAINT [PK_InwardDetailsEntry] PRIMARY KEY CLUSTERED ([InwardDetailsId] ASC) WITH (FILLFACTOR = 80)
 );
 

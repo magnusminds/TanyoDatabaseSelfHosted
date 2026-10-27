@@ -18,7 +18,7 @@ CREATE PROCEDURE [dbo].[ReportCustomerFeedback]
     ,@OrderNo NVARCHAR(100) = NULL
 	,@SalesmanId BIGINT = NULL
 	,@CustomerName NVARCHAR(100) = NULL
-	,@PhoneNo NVARCHAR(10) = NULL
+	,@PhoneNo NVARCHAR(16) = NULL
 	,@RatingFromDate DATETIME = NULL
 	,@RatingToDate DATETIME = NULL
 	,@RatingStatus DECIMAL(18, 2) = NULL

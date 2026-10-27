@@ -1,7 +1,7 @@
 CREATE   PROC [dbo].[ListDealerDetails] (
 	@TenantId BIGINT
 	,@DealerName VARCHAR(100) = NULL
-	,@PhoneNumber VARCHAR(15) = NULL
+	,@PhoneNumber VARCHAR(16) = NULL
 	,@FromDate DATE = NULL
 	,@ToDate DATE = NULL
 	,@LocationID VARCHAR(500) = NULL
@@ -31,7 +31,7 @@ BEGIN
 			,ColorCode VARCHAR(10)
 			,DealerName VARCHAR(100)
 			,EmailAddress VARCHAR(100)
-			,PhoneNumber VARCHAR(15)
+			,PhoneNumber VARCHAR(16)
 			,Salesman VARCHAR(100)
 			,LastModifiedBy VARCHAR(100)
 			,LastModifiedOn VARCHAR(100)
@@ -223,7 +223,7 @@ BEGIN
 			FROM dbo.Orders o WITH (NOLOCK)
 			INNER JOIN #TempDealers tc ON tc.CustomerId = o.CustomerID
 			WHERE o.TenantId = @TenantID
-				AND o.STATUS <> 9
+				AND o.Status <> 9
 			GROUP BY tc.CustomerId
 			)
 			,cteOrdersRefer
@@ -233,7 +233,7 @@ BEGIN
 			FROM dbo.Orders o WITH (NOLOCK)
 			INNER JOIN #TempDealers tc ON tc.CustomerId = o.RefferedBy
 			WHERE o.TenantId = @TenantID
-				AND o.STATUS <> 9
+				AND o.Status <> 9
 			GROUP BY tc.CustomerId
 			)
 		SELECT c.CustomerId
@@ -264,19 +264,14 @@ BEGIN
 	END TRY
 
 	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000)
-		DECLARE @ErrorSeverity INT
-		DECLARE @ErrorState INT
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY()
-			,@ErrorState = ERROR_STATE()
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

@@ -18,7 +18,7 @@ CREATE PROC [dbo].[ListCustomerDetails]
 (
 	@TenantID BIGINT
 	,@CustomerName VARCHAR(100) = NULL
-	,@PhoneNumber VARCHAR(15) = NULL
+	,@PhoneNumber VARCHAR(16) = NULL
 	,@FromDate DATE = NULL
 	,@ToDate DATE = NULL
 	,@RefferedBy BIGINT = NULL
@@ -51,7 +51,7 @@ BEGIN
 			,CustomerName VARCHAR(100)
 			,RefferedBy VARCHAR(100)
 			,EmailAddress VARCHAR(100)
-			,PhoneNumber VARCHAR(15)
+			,PhoneNumber VARCHAR(16)
 			,Salesman VARCHAR(100)
 			,LastModifiedBy VARCHAR(100)
 			,LastModifiedOn VARCHAR(100)
@@ -170,19 +170,14 @@ BEGIN
 		END
 	END TRY
 	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000)
-		DECLARE @ErrorSeverity INT
-		DECLARE @ErrorState INT
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY()
-			,@ErrorState = ERROR_STATE()
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

@@ -19,7 +19,7 @@ CREATE TABLE [dbo].[WebhookResponse] (
     [Wallet]            NVARCHAR (50)      NULL,
     [VPA]               NVARCHAR (50)      NULL,
     [Email]             NVARCHAR (50)      NULL,
-    [ContactNo]         NVARCHAR (15)      NULL,
+    [ContactNo]         VARCHAR (16)       NULL,
     [Fee]               NVARCHAR (50)      NULL,
     [Tax]               NVARCHAR (50)      NULL,
     [ErrorCode]         NVARCHAR (50)      NULL,

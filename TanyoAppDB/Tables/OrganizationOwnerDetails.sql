@@ -1,7 +1,7 @@
 CREATE TABLE [dbo].[OrganizationOwnerDetails] (
     [OwnerId]        BIGINT             IDENTITY (1, 1) NOT NULL,
     [OwnerFullName]  VARCHAR (200)      NOT NULL,
-    [PhoneNumber]    VARCHAR (15)       NOT NULL,
+    [PhoneNumber]    VARCHAR (16)       NOT NULL,
     [EmailId]        VARCHAR (255)      NOT NULL,
     [TenantId]       INT                NOT NULL,
     [IsDeleted]      BIT                CONSTRAINT [DF_OrganizationOwnerDetails_IsDeleted] DEFAULT ((0)) NOT NULL,

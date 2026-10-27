@@ -14,7 +14,7 @@ CREATE PROCEDURE [dbo].[ReportFlaggedInquiries]
      @TenantId BIGINT 
     ,@InquiryNo        VARCHAR(100)    = NULL
     ,@CustomerName     NVARCHAR(100)   = NULL
-    ,@PhoneNumber      VARCHAR(10)     = NULL
+    ,@PhoneNumber      VARCHAR(16)     = NULL
     ,@SalesmanId       BIGINT          = NULL
     ,@SortBy           VARCHAR(50)     = 'InquiryDate'
     ,@SortOrder        VARCHAR(4)      = 'DESC'

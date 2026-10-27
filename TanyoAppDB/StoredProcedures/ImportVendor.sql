@@ -124,9 +124,15 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			IF @VendorPhone NOT LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+			IF (
+				TRIM(@VendorPhone) LIKE '%[^0-9+]%'
+				OR TRIM(@VendorPhone) LIKE '_%[+]%'
+				OR (TRIM(@VendorPhone) LIKE '+%' AND LEN(TRIM(@VendorPhone)) > 16)
+				OR (TRIM(@VendorPhone) NOT LIKE '+%' AND LEN(TRIM(@VendorPhone)) > 15)
+				OR (TRIM(@VendorPhone) LIKE '+%' AND LEN(TRIM(@VendorPhone)) < 2)
+			)
 			BEGIN
-				SET @ErrorMessage = @ErrorMessage + 'Vendor Phone Number must be 10 digits and numeric only. ';
+				SET @ErrorMessage = @ErrorMessage + 'Please enter valid vendor phone number. ';
 			END
 			IF EXISTS (
 					SELECT 1
@@ -138,10 +144,16 @@ BEGIN
 				SET @ErrorMessage = @ErrorMessage + 'Phone Number already exists. ';
 			END
 		END
-		IF ISNULL(@ContactPersonPhone, '') <> ''
-			AND @ContactPersonPhone NOT LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+		IF ISNULL(TRIM(@ContactPersonPhone), '') <> ''
+			AND (
+				TRIM(@ContactPersonPhone) LIKE '%[^0-9+]%'
+				OR TRIM(@ContactPersonPhone) LIKE '_%[+]%'
+				OR (TRIM(@ContactPersonPhone) LIKE '+%' AND LEN(TRIM(@ContactPersonPhone)) > 16)
+				OR (TRIM(@ContactPersonPhone) NOT LIKE '+%' AND LEN(TRIM(@ContactPersonPhone)) > 15)
+				OR (TRIM(@ContactPersonPhone) LIKE '+%' AND LEN(TRIM(@ContactPersonPhone)) < 2)
+			)
 		BEGIN
-			SET @ErrorMessage = @ErrorMessage + 'Contact person phone number must be 10 digits. ';
+			SET @ErrorMessage = @ErrorMessage + 'Please enter valid contact person phone number. ';
 		END
 
 		IF ISNULL(@ContactPersonEmail, '') <> ''

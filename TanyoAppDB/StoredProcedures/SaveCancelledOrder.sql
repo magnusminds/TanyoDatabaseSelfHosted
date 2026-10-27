@@ -1,3 +1,4 @@
+
 /*
 EXEC [dbo].[SaveCancelledOrder]
  @OrderId = 260552
@@ -33,6 +34,7 @@ BEGIN
 			,@UserName VARCHAR(200)
 			,@SystemComment VARCHAR(MAX)
 			,@LogDescription VARCHAR(500)
+			,@KasarAmount DECIMAL(18, 2) = 0
 
 		-- Check if any OrderSetItems Delivered
 		IF NOT EXISTS (
@@ -43,8 +45,16 @@ BEGIN
 				)
 		BEGIN
 			SET @ReturnMessage = 'Your one of the item was delivered already.';
+			SET @Message = 'Your one of the item was delivered already.';
+			SET @JsonObject = NULL
+			SET @Status = 0
+			SET @Error = NULL
 
-			SELECT @ReturnMessage AS [ReturnMessage];
+			--SELECT @ReturnMessage AS [ReturnMessage];
+			SELECT @Status AS [Status]
+			,@Message AS [Message]
+			,@JsonObject AS [Data]
+			,@Error AS [Error]
 
 			RETURN;
 		END
@@ -52,8 +62,26 @@ BEGIN
 		-- Start a transaction
 		BEGIN TRANSACTION SaveCancelledOrder;
 
+		DECLARE @CurrentOrderStatus INT;
+
+		SELECT @CurrentOrderStatus = Status
+		FROM dbo.Orders WITH (UPDLOCK, HOLDLOCK)
+		WHERE OrderId = @OrderId
+		
+		IF @CurrentOrderStatus IS NULL
+		BEGIN
+			SET @Message = 'Order not found.'
+		    ;THROW 50001, @Message, 1;
+		END
+		
+		IF @CurrentOrderStatus = 6
+		BEGIN
+			SET @Message = 'This order has already been cancelled.'
+		    ;THROW 50002, @Message, 1;
+		END
+		
 		-- Check if the order exists and the condition is met
-		SELECT @OrderNo = OrderNo
+		SELECT @OrderNo = OrderNo, @KasarAmount = KasarAmount
 		FROM Orders WITH (NOLOCK)
 		WHERE OrderId = @OrderId;
 
@@ -178,6 +206,7 @@ BEGIN
 		-- Update the Orders table
 		UPDATE Orders
 		SET Status = 0
+			,KasarAmount = 0
 			,Comments = ISNULL(@Comment, '')
 			,UpdatedBy = @UserId
 			,UpdatedDate = SYSDATETIMEOFFSET()
@@ -237,10 +266,33 @@ BEGIN
 			,@CreatedDate = @DT
 			,@CreatedUTCDate = @DTUTC;
 
+		-- Kasar removal Activity Log for cancelled order
+		IF ISNULL(@KasarAmount, 0) > 0
+		BEGIN
+			SET @LogDescription = 'Kasar amount ' + CAST(@KasarAmount AS NVARCHAR(50)) + ' has been removed for Inquiry ' + @OrderNo + ' because order has been cancelled.';
+
+			EXEC dbo.SaveActivityLog @SubjectTypeId = @OrderSubjectTypeId
+				,@SubjectId = @OrderId
+				,@Description = @LogDescription
+				,@Action = 'DELETE'
+				,@CreatedBy = @UserId
+				,@CreatedDate = @DT
+				,@CreatedUTCDate = @DTUTC;
+		END
+
 		-- DeleteOrderManufacturingWorkflows	
 		DELETE
 		FROM OrderManufacturingWorkflows
 		WHERE OrderId = @OrderId
+
+		-- Soft delete for OrderTrack
+		UPDATE dbo.OrderTrack
+		SET IsDeleted = 1
+		   ,LastModifiedBy = @UserId
+		   ,LastModifiedDate = @DT
+		   ,LastModifiedUtcDate = @DTUTC
+		WHERE OrderId = @OrderId
+		AND TenantId = @TenantId
 
 		-- Commit the transaction if everything is successful
 		COMMIT TRAN SaveCancelledOrder;
@@ -275,13 +327,21 @@ BEGIN
 
 		SET @Status = 0;
 
-		DECLARE @ObjectName VARCHAR(500)       
+		DECLARE @ObjectName VARCHAR(500)       
 			,@ErrorMsg NVARCHAR(4000);
 
 		SET @ObjectName = OBJECT_NAME(@@PROCID);
-		SET @ErrorMsg = ERROR_MESSAGE();
 
-		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName       
+		IF (@ErrorMsg IS NULL)
+		BEGIN
+			SET @ErrorMsg = ERROR_MESSAGE();
+		END
+
+		-- Append TenantId and OrderId to the description saved in DBErrorLog
+		SET @ErrorMsg = @ErrorMsg + N' | TenantId: ' + ISNULL(CAST(@TenantId AS NVARCHAR(20)), N'NULL')
+			+ N' | OrderId: ' + ISNULL(CAST(@OrderId AS NVARCHAR(20)), N'NULL');
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName       
 			,@ErrorMsg = @ErrorMsg;
 
 		SELECT @JsonObject = (

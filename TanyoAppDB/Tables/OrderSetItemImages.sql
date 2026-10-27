@@ -7,6 +7,7 @@ CREATE TABLE [dbo].[OrderSetItemImages] (
     [CreatedUTCDate]      DATETIME           CONSTRAINT [DF__OrderSetI__Creat__025D5595] DEFAULT (getutcdate()) NOT NULL,
     [FileType]            VARCHAR (10)       NULL,
     [FileURL]             VARCHAR (MAX)      NULL,
+    [FileName]            NVARCHAR (500)     NULL,
     CONSTRAINT [PK__OrderSet__DC93CB5FF96A1550] PRIMARY KEY CLUSTERED ([OrderSetItemImageId] ASC) WITH (FILLFACTOR = 80)
 );
 
