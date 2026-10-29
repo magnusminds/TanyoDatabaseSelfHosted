@@ -130,6 +130,10 @@ BEGIN
                 ON utm.UserId = u.UserId  
                AND utm.TenantId = @TenantId  
   
+            INNER JOIN dbo.LocationUserMapping AS lum WITH (NOLOCK)  
+                ON lum.UserID = u.UserId  
+               AND lum.LocationID = @LocationId  
+  
             CROSS APPLY  
             (  
                 SELECT  
