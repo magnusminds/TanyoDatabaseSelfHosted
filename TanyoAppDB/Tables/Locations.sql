@@ -12,6 +12,8 @@ CREATE TABLE [dbo].[Locations] (
     [UpdatedDate]    DATETIMEOFFSET (7) NULL,
     [UpdatedUTCDate] DATETIME           NULL,
     [EmailId]        VARCHAR (100)      NULL,
+    [Longitude] NVARCHAR(50) NULL,
+    [Latitude] NVARCHAR(50) NULL,
     PRIMARY KEY CLUSTERED ([LocationID] ASC)
 );
 
