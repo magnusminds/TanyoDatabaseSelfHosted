@@ -29,8 +29,6 @@ BEGIN
    RETURN;  
   END  
 
-  BEGIN TRAN MarkAsReadyToDelivered;  
-  
   IF NOT EXISTS (  
       SELECT 1  
       FROM STRING_SPLIT(@DeliveredList, ',') s  
@@ -60,6 +58,8 @@ BEGIN
     ,'One or more order items are already marked as Ready To Deliver.'  
     ,1;  
   END  
+  
+  BEGIN TRAN MarkAsReadyToDelivered;  
   
   
   

@@ -59,9 +59,6 @@ BEGIN
 			RETURN;
 		END
 
-		-- Start a transaction
-		BEGIN TRANSACTION SaveCancelledOrder;
-
 		DECLARE @CurrentOrderStatus INT;
 
 		SELECT @CurrentOrderStatus = Status
@@ -79,6 +76,9 @@ BEGIN
 			SET @Message = 'This order has already been cancelled.'
 		    ;THROW 50002, @Message, 1;
 		END
+
+		-- Start a transaction
+		BEGIN TRANSACTION SaveCancelledOrder;
 		
 		-- Check if the order exists and the condition is met
 		SELECT @OrderNo = OrderNo, @KasarAmount = KasarAmount

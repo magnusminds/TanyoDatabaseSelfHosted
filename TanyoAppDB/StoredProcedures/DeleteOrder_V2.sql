@@ -65,8 +65,6 @@ BEGIN
   SELECT @OrderCount = COUNT(1)  
   FROM #OrderList;  
   
-  BEGIN TRANSACTION DeleteOrderV2;  
-  
   IF NOT EXISTS (  
     SELECT 1  
     FROM #DelOrder  
@@ -94,6 +92,8 @@ BEGIN
     ,'One or more orders have already been deleted.'  
     ,1;  
   END  
+  
+  BEGIN TRANSACTION DeleteOrderV2;  
   
   /*==============================================================  
             3. Process Each Order  

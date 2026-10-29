@@ -277,8 +277,6 @@ BEGIN
   );  
   
  BEGIN TRY  
-  BEGIN TRAN;  
-  
   IF NOT EXISTS (  
     SELECT 1  
     FROM #OrderSetItemIds  
@@ -309,6 +307,8 @@ BEGIN
     ,'One or more order items have already been delivered.'  
     ,1;  
   END  
+  
+  BEGIN TRAN;  
   
   WHILE @i <= @Cnt  
   BEGIN  
@@ -387,9 +387,12 @@ BEGIN
   SET @ObjectName = OBJECT_NAME(@@PROCID)  
   SET @ErrorMsg = ERROR_MESSAGE()  
   
-  -- Append TenantId and OrderId to the description saved in DBErrorLog  
-  SET @ErrorMsg = @ErrorMsg + ' | TenantId: ' + ISNULL(CAST(@TenantId AS VARCHAR(20)), 'NULL')  
-   + ' | OrderId: ' + ISNULL(CAST(@CurrentOrderId AS VARCHAR(20)), 'NULL')  
+		-- Append TenantId and OrderId (or OrderSetItemId if OrderId is NULL) to the description saved in DBErrorLog   
+		SET @ErrorMsg = @ErrorMsg + ' | TenantId: ' + ISNULL(CAST(@TenantId AS VARCHAR(20)), 'NULL')  
+			+ CASE 
+				WHEN @CurrentOrderId IS NOT NULL THEN ' | OrderId: ' + CAST(@CurrentOrderId AS VARCHAR(20)) 
+				ELSE ' | OrderSetItemId: ' + ISNULL(@OrderSetItemId, 'NULL') 
+			  END
   
   EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName  
    ,@ErrorMsg = @ErrorMsg;  

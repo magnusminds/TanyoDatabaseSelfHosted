@@ -311,8 +311,6 @@ BEGIN
 	END
 
 	BEGIN TRY
-		BEGIN TRAN DeliverOrderSetItem
-
 		DECLARE @CurrentItemStatus INT;
 
 		SELECT @CurrentItemStatus = ItemStatus
@@ -337,6 +335,8 @@ BEGIN
 				,'This order item has already been delivered.'
 				,1;
 		END
+
+		BEGIN TRAN DeliverOrderSetItem
 
 		IF @OrderSetItemSubjectTypeId = @ProductSubjectTypeId
 		BEGIN
