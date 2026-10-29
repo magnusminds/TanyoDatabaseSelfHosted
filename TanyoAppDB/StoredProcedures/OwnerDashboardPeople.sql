@@ -7,7 +7,7 @@
 --
 -- KPI Logic:
 --   Rep universe  = Active tenant users who are NOT manufacturing roles
---                   (Contractor/StoreManager/Supervisor role names excluded,
+--                   (Contractor/Supervisor role names excluded,
 --                   mirroring UserBL.salesmandropdown()).
 --   MonthlyTarget = SalesTargets row for rep + month (0 when unset).
 --   Achieved      = SUM(AmountBeforeGST) of approved orders (period).
@@ -18,7 +18,7 @@
 --   PendingFollowUps = Open leads of the rep with a follow-up due on/before
 --                      today (lead status not Disqualified/Closed/Deleted).
 -- =============================================================================
-CREATE PROCEDURE [dbo].[OwnerDashboardPeople] 
+CREATE OR ALTER PROCEDURE [dbo].[OwnerDashboardPeople] 
 	 @TenantId INT
 	,@Month INT
 	,@Year INT
@@ -41,7 +41,7 @@ BEGIN
 				WHEN @Year = YEAR(@Today)
 					AND @Month = MONTH(@Today)
 					THEN @Today
-				ELSE @Today -- future months: 0 via CASE below
+				ELSE @Today  -- future months: 0 via CASE below
 				END;
 		-- Working days = weekdays (Mon-Fri) only, excludes weekends
 		DECLARE @WorkingDays INT = CASE 
@@ -59,7 +59,7 @@ BEGIN
 												SELECT NULL
 												)
 										) - 1, @MonthStart) AS d
-							FROM sys.objects
+					FROM sys.objects
 							) days
 						WHERE DATEPART(WEEKDAY, days.d) NOT IN (
 								1
@@ -81,7 +81,6 @@ BEGIN
 				AND u.IsDeleted = 0
 				AND REPLACE(ar.Name, '_' + CAST(@TenantId AS VARCHAR(10)), '') NOT IN (
 					'Contractor'
-					,'StoreManager'
 					,'Supervisor'
 					)
 			)
