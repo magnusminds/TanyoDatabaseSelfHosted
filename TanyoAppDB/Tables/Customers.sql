@@ -37,6 +37,7 @@ CREATE TABLE [dbo].[Customers] (
     [SocialMediaUrl]        VARCHAR (500)                                                     NULL,
     [EventText]             VARCHAR (500)                                                     NULL,
     [MonthlyTarget]         DECIMAL (18, 2)                                                   NULL,
+    [CustomerInteriorTypeId] INT NULL,
     CONSTRAINT [PK__Customer__A4AE64B881128DE3] PRIMARY KEY CLUSTERED ([CustomerId] ASC) WITH (FILLFACTOR = 80)
 );
 
