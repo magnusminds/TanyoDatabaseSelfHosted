@@ -8,9 +8,10 @@
 		,@PageSize = 50
 		,@SortBy = 'ApprovedDate'
 		,@SortOrder = 'DESC'
+		,@UserId = NULL
 		
 */
-CREATE PROCEDURE [dbo].[RPT_GetOrderPaymentDue] (
+CREATE OR ALTER PROCEDURE [dbo].[RPT_GetOrderPaymentDue] (
 	 @TenantId INT
 	,@ApprovedFromDate DATE
 	,@ApprovedToDate DATE
@@ -20,6 +21,7 @@ CREATE PROCEDURE [dbo].[RPT_GetOrderPaymentDue] (
 	,@PageSize INT = 25
 	,@SortBy VARCHAR(50) = 'ApprovedDate'
 	,@SortOrder VARCHAR(4) = 'DESC'
+	,@UserId INT = NULL
 	)
 WITH ENCRYPTION
 AS
@@ -28,9 +30,31 @@ BEGIN
 
 	DECLARE @ApprovedFromDateTime DATETIMEOFFSET = NULL
 		   ,@ApprovedToDateTime DATETIMEOFFSET = NULL
+		   ,@HasSuperAccess BIT = 0
 
 	SELECT @ApprovedFromDateTime = CAST(@ApprovedFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
 		  ,@ApprovedToDateTime = CAST(@ApprovedToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30'
+
+	IF @UserId IS NOT NULL AND @UserId > 0
+	BEGIN
+		IF EXISTS (
+			SELECT 1
+			FROM dbo.AspNetUsers u WITH (NOLOCK)
+			INNER JOIN dbo.AspNetUserRoles ur WITH (NOLOCK) ON ur.UserId = u.Id
+			INNER JOIN dbo.AspNetRoleClaims rc WITH (NOLOCK) ON rc.RoleId = ur.RoleId
+			WHERE u.UserId = @UserId
+				AND u.IsDeleted = 0
+				AND rc.ClaimValue IN (
+					'Permissions.App.Order.SuperAccess'
+					,'Permissions.General.Order.SuperAccess'
+				)
+		)
+			SET @HasSuperAccess = 1;
+	END
+	ELSE
+	BEGIN
+		SET @HasSuperAccess = 1;
+	END
 
 	BEGIN TRY
 		SELECT o.OrderId
@@ -92,6 +116,11 @@ BEGIN
 				AND @ApprovedToDateTime
 			AND o.Status <> 9
 			AND (o.TotalAmt - ISNULL(o.AdvanceAmount, 0)) > 0
+			AND (
+				@HasSuperAccess = 1
+				OR o.SalesmanId = @UserId
+				OR (o.SalesmanId IS NULL AND o.CreatedBy = @UserId)
+				)
 		ORDER BY CASE 
 				WHEN @SortBy = 'ApprovedDate'
 					AND @SortOrder = 'ASC'
@@ -179,4 +208,3 @@ BEGIN
 END
 
 GO
-
