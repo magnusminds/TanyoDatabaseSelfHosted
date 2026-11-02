@@ -124,6 +124,7 @@ BEGIN
 						,i.Height
 						,i.Depth
 						,i.Diameter
+						,i.DimensionUnitId
 						,ISNULL((
 								SELECT pia.POProductItemsAttachmentId
 									,pia.POProductItemId

@@ -44,6 +44,7 @@ BEGIN
 			,PT.Height
 			,PT.Depth
 			,PT.Diameter
+			,PT.DimensionUnitId
 			,PT.CoverImage
 			,SUM(POT.UnitPrice * POT.Quantity) OVER () / SUM(POT.Quantity) OVER () AS AverageUnitPrice
 			,COUNT(*) OVER () AS TotalCount

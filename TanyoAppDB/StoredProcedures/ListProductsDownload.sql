@@ -116,6 +116,7 @@ BEGIN
         ,p.Height
         ,p.Depth
         ,p.Diameter
+        ,p.DimensionUnitId
     FROM dbo.Products AS p WITH (NOLOCK)
     INNER JOIN dbo.ProductQuantities AS pq WITH (NOLOCK) ON p.ProductId = pq.ProductId
     INNER JOIN dbo.Categories        AS t  WITH (NOLOCK) ON p.CategoryId = t.CategoryId

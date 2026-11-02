@@ -30,6 +30,7 @@ BEGIN
 			,p.Width AS Width
 			,p.Depth AS Depth
 			,p.Diameter AS Diameter
+			,p.DimensionUnitId AS DimensionUnitId
 			,p.Features AS Description
 			,p.WholesalerPrice AS WholesaleCostPrice
 			,p.RetailerPrice AS RetailerCostPrice

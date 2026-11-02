@@ -108,6 +108,7 @@ BEGIN
 				,p.Width
 				,p.Depth
 				,p.Diameter
+				,p.DimensionUnitId
 				,COUNT(1) OVER (PARTITION BY 1) AS TotalCount
 			FROM dbo.Products AS p WITH (NOLOCK)
 			INNER JOIN dbo.ProductQuantities AS pq WITH (NOLOCK) ON p.ProductId = pq.ProductId

@@ -108,6 +108,7 @@ BEGIN
 					,CreatedDate
 					,CreatedUTCDate
 					,Diameter
+					,DimensionUnitId
 					,IsPriceAutoCalculated
 					,RetailerPrice
 					,WholesalerPrice
@@ -136,6 +137,7 @@ BEGIN
 					,@Date
 					,@UTCDate
 					,p.Diameter
+					,p.DimensionUnitId
 					,p.IsPriceAutoCalculated
 					,p.RetailerPrice
 					,p.WholesalerPrice
@@ -315,6 +317,8 @@ BEGIN
 					,CreatedDate
 					,CreatedUTCDate
 					,Diameter
+					-- DimensionUnitId is intentionally not copied across tenants: LookupValue ids are per tenant,
+					-- so the clone falls back to the default unit label until a user picks one (TAN-4668).
 					,RetailerPrice
 					,WholesalerPrice
 					,VendorProductPrice

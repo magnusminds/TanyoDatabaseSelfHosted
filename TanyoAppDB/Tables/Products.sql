@@ -25,6 +25,7 @@ CREATE TABLE [dbo].[Products] (
     [UpdatedDate]            DATETIMEOFFSET (7)                                   NULL,
     [UpdatedUTCDate]         DATETIME                                             NULL,
     [Diameter]               NUMERIC (18, 2)                                      NULL,
+    [DimensionUnitId]        INT                                                  NULL,
     [VendorId]               BIGINT                                               NULL,
     [ProductVariantId]       BIGINT                                               NULL,
     [IsPriceAutoCalculated]  BIT                                                  CONSTRAINT [DF__Products__IsPric__1269A02C] DEFAULT ((1)) NOT NULL,

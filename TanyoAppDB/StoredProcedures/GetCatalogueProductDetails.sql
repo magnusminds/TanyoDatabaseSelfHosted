@@ -27,6 +27,7 @@ BEGIN
 			,P.Width
 			,P.Depth
 			,P.Diameter
+			,P.DimensionUnitId
 			,P.Features AS Description
 			,C.CategoryName
 			,ISNULL(PQ.Quantity, 0) AS Instock

@@ -48,6 +48,7 @@ BEGIN
 			,OSI.Height
 			,OSI.Depth
 			,OSI.Diameter
+			,OSI.DimensionUnitId
 			,OSI.Quantity
 			,ISNULL(PT.ProductTitle, '') AS ProductTitle
 			,ISNULL(PT.ModelNo, '') AS ModelNo

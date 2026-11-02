@@ -27,6 +27,7 @@ CREATE TABLE [dbo].[OrderSetItems] (
     [Height]                 NUMERIC (18, 2)                                      NULL,
     [Depth]                  NUMERIC (18, 2)                                      NULL,
     [Diameter]               NUMERIC (18, 2)                                      NULL,
+    [DimensionUnitId]        INT                                                  NULL,
     [InstantCostPrice]       NUMERIC (18, 2) NULL,
     [InstantUnitPrice]       NUMERIC (18, 2) NULL,
     [InstantWidth]           NUMERIC (18, 2)                                      NULL,

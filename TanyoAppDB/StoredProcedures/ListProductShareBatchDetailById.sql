@@ -27,6 +27,7 @@ BEGIN
 		,p.Width AS ProductWidth
 		,p.Height AS ProductHeight
 		,p.Depth AS ProductDepth
+		,p.DimensionUnitId
 		,p.CoverImage AS ProductImage
 		,bd.WholesalerPrice
 		,bd.CustomerId

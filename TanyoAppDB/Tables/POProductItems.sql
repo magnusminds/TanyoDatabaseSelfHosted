@@ -19,6 +19,7 @@ CREATE TABLE [dbo].[POProductItems] (
     [Height]                    NUMERIC (18, 2)                                      CONSTRAINT [DF_POProductItems_Height] DEFAULT ((1)) NOT NULL,
     [Depth]                     NUMERIC (18, 2)                                      CONSTRAINT [DF_POProductItems_Depth] DEFAULT ((1)) NOT NULL,
     [Diameter]                  NUMERIC (18, 2)                                      CONSTRAINT [DF_POProductItems_Diameter] DEFAULT ((1)) NOT NULL,
+    [DimensionUnitId]             INT                                               NULL,
     [TentativePOItemPickupDate] DATETIME                                             NULL,
     [VendorOrderSetItemId]      BIGINT                                               NULL,
     [POItemMaterialReadyDate]   DATETIME                                             NULL,

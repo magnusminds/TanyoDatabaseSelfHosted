@@ -35,6 +35,7 @@ BEGIN
 			,ISNULL(p.Height, 0) AS Height
 			,ISNULL(p.Depth, 0) AS Depth
 			,ISNULL(p.Diameter, 0) AS Diameter
+			,p.DimensionUnitId
 			,CASE WHEN p.STATUS = 0 THEN 2 ELSE p.Status END AS [Status]
 			,COUNT(1) OVER (PARTITION BY 1) AS TotalCount
 		FROM Products p WITH (NOLOCK)

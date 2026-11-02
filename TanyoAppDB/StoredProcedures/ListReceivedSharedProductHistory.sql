@@ -25,6 +25,7 @@ BEGIN
 			,p.Width AS ProductWidth
 			,p.Height AS ProductHeight
 			,p.Depth AS ProductDepth
+			,p.DimensionUnitId
 			,bd.WholesalerPrice
 			,bd.WholesalerPrice AS RequestedPrice
 			,bd.TenantId

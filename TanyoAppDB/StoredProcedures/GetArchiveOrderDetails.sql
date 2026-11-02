@@ -66,6 +66,7 @@ BEGIN
 			,Width DECIMAL(18, 2)
 			,Height DECIMAL(18, 2)
 			,Depth DECIMAL(18, 2)
+			,DimensionUnitId INT NULL
 			,Quantity DECIMAL(18, 2)
 			,UnitPrice DECIMAL(18, 2)
 			,DiscountPrice DECIMAL(18, 2)
@@ -165,6 +166,7 @@ BEGIN
 			,Width DECIMAL(18, 2)
 			,Height DECIMAL(18, 2)
 			,Depth DECIMAL(18, 2)
+			,DimensionUnitId INT NULL
 			,Quantity DECIMAL(18, 2)
 			,UnitPrice DECIMAL(18, 2)
 			,DiscountPrice DECIMAL(18, 2)
@@ -243,6 +245,7 @@ BEGIN
 			,osi.Width
 			,osi.Height
 			,osi.Depth
+			,osi.DimensionUnitId
 			,osi.Quantity
 			,ROUND(osi.UnitPrice, 0) AS UnitPrice
 			,osi.DiscountPrice
@@ -408,6 +411,7 @@ BEGIN
 			,R.Width
 			,R.Height
 			,R.Depth
+			,R.DimensionUnitId
 			,R.Quantity
 			,R.UnitPrice
 			,R.DiscountPrice

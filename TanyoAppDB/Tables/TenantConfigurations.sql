@@ -32,6 +32,7 @@ CREATE TABLE [dbo].[TenantConfigurations] (
     [AppThemeColorsJson]              NVARCHAR (MAX)     NULL,
     [UseMarginMultiplierForPricing]   BIT                DEFAULT ((0)) NOT NULL,
     [ShowExactStockQuantityInShare]   BIT                CONSTRAINT [DF_TenantConfigurations_ShowExactStockQuantityInShare] DEFAULT ((0)) NOT NULL,
+    [ShowDimensionUnitOnOrderDocument]    BIT                CONSTRAINT [DF_TenantConfigurations_ShowDimensionUnitOnOrderDocument] DEFAULT ((0)) NOT NULL,
     PRIMARY KEY CLUSTERED ([TenantConfigurationID] ASC)
 );
 

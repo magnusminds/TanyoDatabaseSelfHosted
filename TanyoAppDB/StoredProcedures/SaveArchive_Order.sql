@@ -153,6 +153,7 @@ BEGIN
 			,Height
 			,Depth
 			,Diameter
+			,DimensionUnitId
 			,Quantity
 			,UnitPrice
 			,DiscountPrice
@@ -195,6 +196,7 @@ BEGIN
 			,Height
 			,Depth
 			,Diameter
+			,DimensionUnitId
 			,Quantity
 			,UnitPrice
 			,DiscountPrice

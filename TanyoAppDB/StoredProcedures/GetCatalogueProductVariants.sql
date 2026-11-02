@@ -27,6 +27,7 @@ BEGIN
 			,p.Width
 			,p.Depth
 			,p.Diameter
+			,p.DimensionUnitId
 			,c.CategoryName
 			,ISNULL(pq.Quantity, 0) AS InStock
 		FROM dbo.ProductVariants AS pv WITH (NOLOCK)
