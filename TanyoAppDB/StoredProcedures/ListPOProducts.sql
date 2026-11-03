@@ -14,8 +14,9 @@ EXEC ListPOProducts
  ,@OrderNo = NULL
  ,@CustomerName = NULL
  ,@TagId = NULL
+ ,@FilterBy = NULL
 */
-CREATE PROC [dbo].[ListPOProducts] (
+CREATE OR ALTER PROC [dbo].[ListPOProducts] (
 	@TenantId BIGINT
 	,@VendorId BIGINT = NULL
 	,@PONumber VARCHAR(50) = NULL
@@ -30,6 +31,7 @@ CREATE PROC [dbo].[ListPOProducts] (
 	,@OrderNo VARCHAR(50) = NULL
 	,@CustomerName VARCHAR(200) = NULL
 	,@TagId BIGINT = NULL
+	,@FilterBy INT = NULL
 	)
 WITH ENCRYPTION
 AS
@@ -82,6 +84,8 @@ BEGIN
 			,LabelId BIGINT NULL
 			,ColorCode VARCHAR(50) NULL
 			,LabelName VARCHAR(150) NULL
+			,IsPinned BIT NOT NULL
+			,IsFlagged BIT NOT NULL
 			);
 
 		INSERT INTO #POProduct (
@@ -106,6 +110,8 @@ BEGIN
 			,LabelId
 			,ColorCode
 			,LabelName
+			,IsPinned
+			,IsFlagged
 			)
 		SELECT p.POProductId
 			,v.VendorName
@@ -146,6 +152,8 @@ BEGIN
 			,p.LabelId
 			,lb.ColorCode
 			,lb.LabelName
+			,ISNULL(p.IsPinned, 0) AS IsPinned
+			,ISNULL(p.IsFlagged, 0) AS IsFlagged
 		FROM POProducts p WITH (NOLOCK)
 		INNER JOIN Vendors v WITH (NOLOCK) ON p.VendorId = v.VendorId
 		LEFT JOIN #ItemCounts i ON i.POProductId = p.POProductId
@@ -199,6 +207,11 @@ BEGIN
 					)
 				OR p.LabelId = @TagId
 				)
+			AND (
+				@FilterBy IS NULL
+				OR (@FilterBy = 1 AND p.IsPinned = 1)
+				OR (@FilterBy = 2 AND p.IsFlagged = 1)
+				)
 
 		SELECT POProductId
 			,VendorName
@@ -221,13 +234,16 @@ BEGIN
 			,LabelId
 			,ColorCode
 			,LabelName
+			,IsPinned
+			,IsFlagged
 			,COUNT(*) OVER () AS TotalCount
 		FROM #POProduct
 		WHERE (
 				@PaymentStatus IS NULL
 				OR PaymentStatus = @PaymentStatus
 				)
-		ORDER BY CASE 
+		ORDER BY IsPinned DESC
+			,CASE 
 				WHEN @SortBy = 'VendorName'
 					AND @SortOrder = 'ASC'
 					THEN VendorName
@@ -322,6 +338,3 @@ BEGIN
 			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
-
-GO
-
