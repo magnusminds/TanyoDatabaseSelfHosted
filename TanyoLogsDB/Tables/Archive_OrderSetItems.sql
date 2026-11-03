@@ -23,6 +23,7 @@ CREATE TABLE [dbo].[Archive_OrderSetItems] (
     [Width]                      NUMERIC (18, 2)    NULL,
     [Height]                     NUMERIC (18, 2)    NULL,
     [Depth]                      NUMERIC (18, 2)    NULL,
+    [DimensionUnitId]            INT                NULL,
     [Diameter]                   NUMERIC (18, 2)    NULL,
     [Quantity]                   NUMERIC (18, 2)    NOT NULL,
     [Comment]                    NVARCHAR (MAX)     NULL,
