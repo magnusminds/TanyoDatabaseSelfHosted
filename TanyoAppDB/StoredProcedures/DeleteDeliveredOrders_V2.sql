@@ -70,6 +70,31 @@ BEGIN
         INNER JOIN #DelOrder DORD
             ON DORD.OrderId = ORD.OrderId;
 
+        -- 1. Validate Order exists
+        IF NOT EXISTS (SELECT 1 FROM #DelOrder)
+            OR EXISTS (
+                SELECT 1
+                FROM #DelOrder DORD
+                LEFT JOIN #OrderList OL
+                    ON OL.OrderId = DORD.OrderId
+                WHERE OL.OrderId IS NULL
+            )
+        BEGIN
+            SET @ResultMessage = 'Order not found.';
+            RETURN;
+        END
+
+        -- 2. Validate if order is already deleted
+        IF EXISTS (
+            SELECT 1 
+            FROM #OrderList
+            WHERE Status = 9 -- Deleted
+        )
+        BEGIN
+            SET @ResultMessage = 'This order has already been deleted.'
+            RETURN;
+        END
+
         IF EXISTS(
             SELECT 1 
             FROM #OrderList

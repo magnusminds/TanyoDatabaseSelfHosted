@@ -21,7 +21,34 @@ BEGIN
 		,@DtUTC DATETIME = GETUTCDATE()
 		,@CategoryTypeId BIGINT
 		,@ProductIds VARCHAR(20)
-		,@ActivityDescription VARCHAR(MAX);
+		,@ActivityDescription VARCHAR(MAX)
+		,@ProductStatus INT;
+
+	-- 1. Validate Product
+	IF NOT EXISTS (
+		SELECT 1
+		FROM dbo.Products WITH (NOLOCK)
+		WHERE ProductId = @ProductId
+	)
+	BEGIN
+		SELECT CAST(0 AS BIT) AS Status,
+			'Product not found.' AS [Message]
+		RETURN;
+	END
+
+	SELECT @ProductStatus = Ps.Status
+	FROM Products AS Ps WITH (NOLOCK)
+	WHERE Ps.ProductId = @ProductId
+		AND Ps.TenantId = @TenantId
+
+	-- 2. Validate if product is already deleted
+	IF @ProductStatus = 3
+	BEGIN
+		SELECT Cast(0 AS BIT) AS Status
+			,'This product has already been deleted.' AS [Message];
+
+		RETURN;
+	END
 
 	SELECT @SubjectTypeId = SubjectTypeId
 	FROM SubjectTypes WITH (NOLOCK)

@@ -205,7 +205,8 @@ BEGIN
 		FROM OrderSetItems OSI
 		WHERE OSI.OrderSetItemId = @OrderSetItemId
 			OR OSI.ParentOrderSetItemId = @OrderSetItemId
-
+			AND OSI.IsDeleted = 0
+			
 		IF EXISTS (
 				SELECT 1
 				FROM OrderSetItems

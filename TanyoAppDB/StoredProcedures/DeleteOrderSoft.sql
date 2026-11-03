@@ -54,6 +54,37 @@ BEGIN
 		FROM Orders ORD WITH (NOLOCK)
 		INNER JOIN #DelOrder DORD ON DORD.OrderId = ORD.OrderId
 
+		-- 1. Validate Order Exists
+		IF NOT EXISTS (SELECT 1 FROM #DelOrder)
+			OR EXISTS (
+				SELECT 1
+				FROM #DelOrder DORD
+				LEFT JOIN #OrderList OL
+					ON OL.OrderId = DORD.OrderId
+				WHERE OL.OrderId IS NULL
+			)
+		BEGIN
+			SELECT 0 AS [Status],
+				'Order not found.' AS [Message],
+				NULL AS [Data],
+				NULL AS [Error];
+			RETURN;
+		END
+
+		-- 2. Validate Already Deleted Orders
+		IF EXISTS (
+			SELECT 1
+			FROM #OrderList
+			WHERE Status = 9
+		)
+		BEGIN
+			SELECT 0 AS [Status],
+				'This order has already been deleted.' AS [Message],
+				NULL AS [Data],
+				NULL AS [Error];
+			RETURN;
+		END
+
 		-- Check Stock on Hold and Release if any
 		DECLARE @Temp_OrderSetItems TABLE
 		(
@@ -228,6 +259,7 @@ BEGIN
 		SET OC.Status = 9
 		FROM dbo.OrderComments OC 
 		INNER JOIN #OrderList ORDL ON OC.OrderId = ORDL.OrderId
+		WHERE OC.Status <> 9;
 
 		UPDATE PTS
 		SET IsDeleted = 1
@@ -236,6 +268,7 @@ BEGIN
 			,UpdatedUTCDate = GETUTCDATE()
 		FROM dbo.Payments PTS
 		INNER JOIN #OrderList ORDL ON PTS.OrderId = ORDL.OrderId
+		WHERE PTS.IsDeleted = 0;
 
 		--DELETE 
 		--FROM OrderSetItemReceivables 
@@ -293,6 +326,7 @@ BEGIN
 			,UpdatedUTCDate = GETUTCDATE()
 		FROM dbo.OrderSetItems OSI
 		INNER JOIN #OrderList ORDL ON OSI.OrderId = ORDL.OrderId
+		WHERE OSI.IsDeleted = 0;
 
 		UPDATE OS
 		SET IsDeleted = 1
@@ -301,6 +335,7 @@ BEGIN
 			,UpdatedUTCDate = GETUTCDATE()
 		FROM dbo.OrderSets OS
 		INNER JOIN #OrderList ORDL ON OS.OrderId = ORDL.OrderId		
+		WHERE OS.IsDeleted = 0;
 
 		--DELETE SOH
 		--FROM dbo.StockOnHold SOH
@@ -313,6 +348,7 @@ BEGIN
 			,UpdatedUTCDate = GETUTCDATE()
 		FROM dbo.Orders ORD
 		INNER JOIN #OrderList ORDL ON ORD.OrderId = ORDL.OrderId
+		WHERE ORD.STATUS <> 9;
 
 		COMMIT TRAN delOrderDependentData
 

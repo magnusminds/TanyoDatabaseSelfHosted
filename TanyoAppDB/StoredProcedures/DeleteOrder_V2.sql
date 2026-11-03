@@ -60,7 +60,7 @@ BEGIN
    ,ORD.Status  
   INTO #OrderList  
   FROM dbo.Orders ORD  
-  INNER JOIN #DelOrder DORD ON DORD.OrderId = ORD.OrderId;  
+  INNER JOIN #DelOrder DORD ON DORD.OrderId = ORD.OrderId;
   
   SELECT @OrderCount = COUNT(1)  
   FROM #OrderList;  
@@ -153,7 +153,8 @@ BEGIN
    UPDATE OC  
    SET OC.Status = 9  
    FROM dbo.OrderComments OC  
-   WHERE OC.OrderId = @IncOrderId;  
+   WHERE OC.OrderId = @IncOrderId
+     AND OC.Status <> 9;  
   
    /*----------------------------------------------------------  
                 Mark Payments as deleted  
@@ -164,7 +165,8 @@ BEGIN
     ,PTS.UpdatedDate = GETDATE()  
     ,PTS.UpdatedUTCDate = GETUTCDATE()  
    FROM dbo.Payments PTS  
-   WHERE PTS.OrderId = @IncOrderId;  
+   WHERE PTS.OrderId = @IncOrderId
+     AND PTS.IsDeleted = 0;  
   
    /*----------------------------------------------------------  
                 Mark Order as deleted  
@@ -175,7 +177,8 @@ BEGIN
     ,ORD.UpdatedDate = GETDATE()  
     ,ORD.UpdatedUTCDate = GETUTCDATE()  
    FROM dbo.Orders ORD  
-   WHERE ORD.OrderId = @IncOrderId;  
+   WHERE ORD.OrderId = @IncOrderId
+     AND ORD.Status <> 9;  
   
    /*----------------------------------------------------------  
                 Next Order  

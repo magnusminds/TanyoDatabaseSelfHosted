@@ -33,6 +33,32 @@ BEGIN
         FROM STRING_SPLIT(@POProductIds, ',')
         WHERE TRY_CAST(value AS BIGINT) IS NOT NULL;
         
+         -- 1. Validate Product
+        IF NOT EXISTS (
+            SELECT 1
+            FROM #POProducts T
+            INNER JOIN dbo.POProducts POP WITH (NOLOCK)
+                ON POP.POProductId = T.POProductId
+        )
+        BEGIN
+            SELECT CAST(0 AS BIT) AS [Status],
+                'Product not found.' AS [Message];
+            RETURN;
+        END
+
+        -- 2. Validate if product is already deleted
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.POProducts POP WITH (NOLOCK)
+            INNER JOIN #POProducts T ON POP.POProductId = T.POProductId
+            WHERE POP.IsDeleted = 1
+        )
+        BEGIN
+            SELECT CAST(0 AS BIT) AS [Status],
+                'This product has already been deleted.' AS [Message];
+            RETURN;
+        END
+
         ------------------------------------------------------------
         -- Soft Delete Products
         ------------------------------------------------------------
