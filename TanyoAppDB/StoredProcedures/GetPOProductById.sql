@@ -3,7 +3,7 @@ EXEC GetPOProductById
  @POProductId = 40661  
  ,@TenantId = 2  
 */
-CREATE PROC [dbo].[GetPOProductById] (
+CREATE OR ALTER PROC [dbo].[GetPOProductById] (
 	@POProductId BIGINT
 	,@TenantId BIGINT
 	)
@@ -200,6 +200,9 @@ BEGIN
 			,p.SGSTAmount
 			,p.IGSTAmount
 			,p.IsInterState
+			,p.LabelId  
+			,l.ColorCode  
+			,l.LabelName
 		FROM dbo.POProducts p WITH (NOLOCK)
 		INNER JOIN dbo.Vendors v WITH (NOLOCK) ON p.VendorId = v.VendorId
 		LEFT JOIN dbo.POProductPayment POP WITH (NOLOCK) ON POP.POProductId = p.POProductId
@@ -207,6 +210,7 @@ BEGIN
 			AND POP.PaymentStatus = 1
 		LEFT JOIN dbo.Orders o WITH (NOLOCK) ON p.OrderId = o.OrderId
 		LEFT JOIN dbo.Customers c WITH (NOLOCK) ON o.CustomerID = c.CustomerId
+		LEFT JOIN dbo.Labels l WITH (NOLOCK) ON p.LabelId = l.LabelId AND l.IsDeleted = 0
 		WHERE p.POProductId = @POProductId
 			AND p.TenantId = @TenantId
 			AND p.IsDeleted = 0
@@ -230,7 +234,10 @@ BEGIN
 			,p.CGSTAmount
 			,p.SGSTAmount
 			,p.IGSTAmount
-			,p.IsInterState;
+			,p.IsInterState
+			,p.LabelId  
+			,l.ColorCode  
+			,l.LabelName;
 	END TRY
 
 	BEGIN CATCH
