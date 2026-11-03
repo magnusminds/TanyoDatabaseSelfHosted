@@ -322,9 +322,19 @@ BEGIN
 				WHEN @SortBy = 'OrderNo'
 					AND @SortOrder = 'DESC'
 					THEN OrderNo
+				END DESC
+			,CASE 
+				WHEN @SortBy = 'LabelName'
+					AND @SortOrder = 'ASC'
+					THEN LabelName
+				END ASC
+			,CASE 
+				WHEN @SortBy = 'LabelName'
+					AND @SortOrder = 'DESC'
+					THEN LabelName
 				END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
 
-		FETCH NEXT @PageSize ROWS ONLY;;
+		FETCH NEXT @PageSize ROWS ONLY;
 	END TRY
 
 	BEGIN CATCH
