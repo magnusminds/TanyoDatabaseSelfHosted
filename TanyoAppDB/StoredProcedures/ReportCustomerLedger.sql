@@ -79,7 +79,12 @@ BEGIN
         ,ie.OrderId  
         ,CAST(ie.CreatedDate AS DATE)  
         ,ie.InwardEntryNumber  
-        ,-SUM(ISNULL(ide.Quantity, 0) * ISNULL(osi.UnitSalePrice, 0))  
+        ,-SUM(CAST(CASE WHEN osi.Quantity > 0
+                             AND (osi.AmountBeforeGST + osi.CGSTAmount + osi.SGSTAmount) > 0
+                        THEN (osi.AmountBeforeGST + osi.CGSTAmount + osi.SGSTAmount)
+                             * ISNULL(ide.Quantity, 0) / osi.Quantity
+                        ELSE ISNULL(ide.Quantity, 0) * ISNULL(osi.UnitSalePrice, 0)
+                   END AS DECIMAL(18,2)))  
     FROM InwardEntry ie  
     INNER JOIN InwardDetailsEntry ide  
         ON ide.InwardId = ie.InwardId  

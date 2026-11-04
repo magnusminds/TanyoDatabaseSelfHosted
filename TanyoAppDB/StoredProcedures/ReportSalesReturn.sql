@@ -98,18 +98,15 @@ BEGIN
             ,ide.Quantity
             ,CAST
             (
-                ide.Quantity *
-                (
-                    CASE
-                        WHEN osi.UnitSalePrice > 0
-                            THEN osi.UnitSalePrice
+                CASE
+                    WHEN osi.OrderSetItemId IS NOT NULL
+                         AND osi.Quantity > 0
+                         AND (osi.AmountBeforeGST + osi.CGSTAmount + osi.SGSTAmount) > 0
+                        THEN (osi.AmountBeforeGST + osi.CGSTAmount + osi.SGSTAmount)
+                             * ide.Quantity / osi.Quantity
 
-                        WHEN osi.Quantity > 0
-                            THEN osi.AmountBeforeGST / osi.Quantity
-
-                        ELSE ISNULL(p.RetailerPrice,0)
-                    END
-                )
+                    ELSE ide.Quantity * ISNULL(p.RetailerPrice,0)
+                END
                 AS DECIMAL(18,2)
             )
             ,ISNULL(w.Name,'-')

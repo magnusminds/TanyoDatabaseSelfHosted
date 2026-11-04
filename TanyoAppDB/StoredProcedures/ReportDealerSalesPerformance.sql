@@ -14,7 +14,7 @@
 -- NOTE     : BucketLabel is informational only (DATENAME is server-language
 --            dependent); the application derives authoritative labels.
 -- =====================================================================
-CREATE PROCEDURE [dbo].[ReportDealerSalesPerformance]
+CREATE OR ALTER PROCEDURE [dbo].[ReportDealerSalesPerformance]
         @TenantId INT
         ,@FromDate DATE
         ,@ToDate DATE
@@ -109,7 +109,7 @@ BEGIN
                 ,LTRIM(RTRIM(ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, ''))) AS CustomerName
                 ,c.PhoneNumber
                 ,ISNULL(ct.Name, '') AS CustomerTypeName
-                ,ISNULL(SUM(o.TotalAmount), 0) AS RangeTotalSales
+                ,ISNULL(SUM(ISNULL(o.TotalAmt, o.TotalAmount)), 0) AS RangeTotalSales
                 ,COUNT(o.OrderId) AS RangeTotalOrders
         INTO #QualifyingCustomers
         FROM Customers c
@@ -150,7 +150,7 @@ BEGIN
                 ,q.CustomerTypeName
                 ,b.BucketIndex
                 ,b.BucketLabel
-                ,ISNULL(SUM(o.TotalAmount), 0) AS BucketAmount
+                ,ISNULL(SUM(ISNULL(o.TotalAmt, o.TotalAmount)), 0) AS BucketAmount
                 ,COUNT(o.OrderId) AS BucketOrderCount
                 ,q.RangeTotalSales
                 ,q.RangeTotalOrders
@@ -188,7 +188,7 @@ BEGIN
 
         ORDER BY CustomerId, BucketIndex;
     END TRY
-BEGIN CATCH
+    BEGIN CATCH
 		DECLARE @ObjectName VARCHAR(500)
 			,@ErrorMsg VARCHAR(MAX);
 
