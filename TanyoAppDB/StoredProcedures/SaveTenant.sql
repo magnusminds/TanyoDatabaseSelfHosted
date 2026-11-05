@@ -1460,19 +1460,19 @@ BEGIN
 			AS (
 				SELECT 0.00 AS MinAmount
 					,100000.00 AS MaxAmount
-					,'High fives to [SalesmanName] for closing another order. A step closer to success! ??' AS NotificationMessage
+					,N'High fives to [SalesmanName] for closing another order. A step closer to success! 🤟' AS NotificationMessage
 				
 				UNION ALL
 				
 				SELECT 100000.00
 					,500000.00
-					,'Cheers to [SalesmanName] for finalizing a deal. Together, we grow! ??'
+					,N'Cheers to [SalesmanName] for finalizing a deal. Together, we grow! 🤩'
 				
 				UNION ALL
 				
 				SELECT 500000.00
 					,- 1.00
-					,'Big shoutout to [SalesmanName] for finalizing a fantastic order. What an inspiration! ??'
+					,N'Big shoutout to [SalesmanName] for finalizing a fantastic order. What an inspiration! 🤑'
 				)
 			INSERT INTO NotificationTemplate (
 				MinAmount
@@ -5058,31 +5058,31 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 				,CreatedBy
 				)
 			SELECT @LookupId
-				,'Below ₹10,000'
+				,N'Below ₹10,000'
 				,1
 			
 			UNION ALL
 			
 			SELECT @LookupId
-				,'₹10,000 – ₹50,000'
+				,N'₹10,000 – ₹50,000'
 				,1
 			
 			UNION ALL
 			
 			SELECT @LookupId
-				,'₹50,000 – ₹1,00,000'
+				,N'₹50,000 – ₹1,00,000'
 				,1
 			
 			UNION ALL
 			
 			SELECT @LookupId
-				,'₹1,00,000 – ₹5,00,000'
+				,N'₹1,00,000 – ₹5,00,000'
 				,1
 			
 			UNION ALL
 			
 			SELECT @LookupId
-				,'Above ₹5,00,000'
+				,N'Above ₹5,00,000'
 				,1
 
 			SELECT @LookupId = 0
