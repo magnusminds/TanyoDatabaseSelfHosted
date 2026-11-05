@@ -1571,6 +1571,12 @@ BEGIN
 			SELECT 'CustomerBehavior'
 				,@TenantId
 				,@UserId
+			
+			UNION ALL
+			
+			SELECT 'BuyingRange'
+				,@TenantId
+				,@UserId
 
 			PRINT 'Lookups Created Successfully'
 
@@ -1799,13 +1805,7 @@ BEGIN
 			
 			SELECT 'Stock Transfer PDF'
 				,@TenantId
-				,@UserId
-			
-			UNION ALL
-			
-			SELECT 'BuyingRange'
-				,@TenantId
-				,@UserId
+				,@UserId			
 
 			PRINT 'Email CMS Created Successfully'
 
@@ -5876,4 +5876,3 @@ tions or need assistance, don''t hesitate to reach out to us at <b>support@tanyo
 END
 
 GO
-
