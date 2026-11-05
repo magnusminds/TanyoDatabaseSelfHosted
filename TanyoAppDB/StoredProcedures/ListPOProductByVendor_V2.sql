@@ -94,6 +94,7 @@ BEGIN
 			,p.Height
 			,p.Depth
 			,p.Diameter
+			,p.DimensionUnitId
 			,c.IsSellByPerSQFT
 			,CAST(ISNULL(PCF_AGG.SQFTinBOXValue, 0) AS NUMERIC(18, 2)) AS SQFTinBOX
 			,CAST(ISNULL(PCF_AGG.SQFTinBOXValue, 0) AS NUMERIC(18, 2)) AS TotalSQFT
