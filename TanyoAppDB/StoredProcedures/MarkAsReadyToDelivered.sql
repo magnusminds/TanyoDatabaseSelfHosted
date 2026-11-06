@@ -280,25 +280,11 @@ BEGIN
   
   SET @ObjectName = OBJECT_NAME(@@PROCID)  
   SET @ErrorMsg = ERROR_MESSAGE()  
-  
-  -- Append TenantId and OrderId(s) to the description saved in DBErrorLog  
-  DECLARE @ErrOrderIds VARCHAR(MAX);  
-  
-  SELECT @ErrOrderIds = STRING_AGG(CAST(X.OrderId AS VARCHAR(20)), ',')  
-  FROM (  
-   SELECT DISTINCT OSI.OrderId  
-   FROM dbo.OrderSetItems OSI WITH (NOLOCK)  
-   WHERE OSI.OrderSetItemId IN (  
-     SELECT TRY_CAST(value AS BIGINT)  
-     FROM STRING_SPLIT(@DeliveredList, ',')  
-     )  
-   ) X;  
-  
-  SET @ErrorMsg = @ErrorMsg + ' | TenantId: ' + ISNULL(CAST(@TenantId AS VARCHAR(20)), 'NULL')  
-   + ' | OrderId: ' + ISNULL(@ErrOrderIds, 'NULL');  
-  
-  EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName  
-   ,@ErrorMsg = @ErrorMsg  
+  IF ERROR_NUMBER() NOT IN (50001, 50002)
+  BEGIN
+   EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+    ,@ErrorMsg = @ErrorMsg
+  END
   
   SELECT CAST(0 AS BIT) AS Status  
    ,ERROR_MESSAGE() AS Message;  

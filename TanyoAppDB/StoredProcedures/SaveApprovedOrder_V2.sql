@@ -369,16 +369,15 @@ BEGIN
 			ROLLBACK TRANSACTION SaveApprovedOrder_V2;
 
 		SET @Status = 0;
-
+		
 		DECLARE @ObjectName VARCHAR(500) = OBJECT_NAME(@@PROCID);
+		DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
+		IF ERROR_NUMBER() NOT IN (50001, 50002)
+		BEGIN
 
-		-- Append TenantId and OrderId to the description saved in DBErrorLog 
-		DECLARE @ErrorMsg NVARCHAR(4000) = @Message + ' | TenantId: ' + ISNULL(CAST(@TenantId AS VARCHAR(20)), 'NULL') 
-		+ ' | OrderId: ' + ISNULL(CAST(@OrderId AS VARCHAR(20)), 'NULL');
-
-		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
-			,@ErrorMsg = @ErrorMsg;
-
+			EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+				,@ErrorMsg = @ErrorMsg;
+		END	
 		SELECT @JsonObject = (
 				SELECT *
 				FROM Orders WITH (NOLOCK)

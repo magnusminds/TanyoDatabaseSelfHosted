@@ -644,13 +644,11 @@ BEGIN
 
 		SET @ObjectName = OBJECT_NAME(@@PROCID);
 		SET @ErrorMsg = ERROR_MESSAGE();
-
-		-- Append TenantId and OrderId to the description saved in DBErrorLog
-		SET @ErrorMsg = @ErrorMsg + ' | TenantId: ' + ISNULL(CAST(@TenantId AS VARCHAR(20)), 'NULL')
-			+ ' | OrderId: ' + ISNULL(CAST(@OrderId AS VARCHAR(20)), 'NULL');
-
-		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
-			,@ErrorMsg = @ErrorMsg;
+		IF ERROR_NUMBER() NOT IN (50001, 50002)
+		BEGIN
+			EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+				,@ErrorMsg = @ErrorMsg;
+		END		
 
 		SELECT CAST(0 AS BIT) AS [ReturnCode]
 			,ERROR_MESSAGE() AS [ReturnMessage]

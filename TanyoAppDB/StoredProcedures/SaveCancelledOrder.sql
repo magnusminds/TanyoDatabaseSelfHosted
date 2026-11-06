@@ -336,13 +336,11 @@ BEGIN
 		BEGIN
 			SET @ErrorMsg = ERROR_MESSAGE();
 		END
-
-		-- Append TenantId and OrderId to the description saved in DBErrorLog
-		SET @ErrorMsg = @ErrorMsg + N' | TenantId: ' + ISNULL(CAST(@TenantId AS NVARCHAR(20)), N'NULL')
-			+ N' | OrderId: ' + ISNULL(CAST(@OrderId AS NVARCHAR(20)), N'NULL');
-
-		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName       
-			,@ErrorMsg = @ErrorMsg;
+		IF ERROR_NUMBER() NOT IN (50001, 50002)
+		BEGIN
+			EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+				,@ErrorMsg = @ErrorMsg;
+		END
 
 		SELECT @JsonObject = (
 				SELECT *
