@@ -27,6 +27,7 @@ BEGIN
 							THEN 1
 						ELSE 0
 						END AS IsManufacturing
+					,C.IsInHouseManufacturing
 					,(
 						SELECT MWF.ManufacturingWorkflowId AS WorkflowId
 							,MWF.WorkflowName

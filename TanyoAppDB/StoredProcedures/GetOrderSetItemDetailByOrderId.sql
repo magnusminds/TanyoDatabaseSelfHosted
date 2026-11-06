@@ -154,6 +154,7 @@ BEGIN
 						THEN 1
 					ELSE 0
 					END AS BIT) AS IsVendorInterState
+			,CT.IsInHouseManufacturing
 		--  ,CAST(0 AS BIT) AS IsVendorInterState    
 		FROM OrderSets OS WITH (NOLOCK)
 		INNER JOIN @OrderSetTotalAmount ostm ON ostm.OrderSetId = OS.OrderSetId
