@@ -165,7 +165,7 @@ BEGIN
 		FROM OrderSetItems osi WITH (NOLOCK)
 		WHERE osi.OrderId = @OrderId
 
-		INSERT INTO OrderSetItems (ParentOrderSetItemId, OrderId, OrderSetId, DeliveryNo, SubjectTypeId, SubjectId, DeliveryDate, Quantity, UnitPrice, DiscountPrice, GrossTotal, Discount, TotalAmount, AmountBeforeGST, CGSTAmount, SGSTAmount, ProductImage, Width, Height, Depth, Diameter, Comment, ItemStatus, ReceiveDate, ProvidedMaterial, CreatedBy, CreatedDate, CreatedUTCDate, DeliveryComment, GST, CostPrice, IsDeleted, OfferId, InstantUnitPrice, InstantWidth, InstantHeight, InstantDepth, InstantDiameter, InstantCostPrice, ReadyToDeliveredDate, DefaultProductVendorId, IsQuantityOnHold, StockQty)
+		INSERT INTO OrderSetItems (ParentOrderSetItemId, OrderId, OrderSetId, DeliveryNo, SubjectTypeId, SubjectId, DeliveryDate, Quantity, UnitPrice, DiscountPrice, GrossTotal, Discount, TotalAmount, AmountBeforeGST, CGSTAmount, SGSTAmount, ProductImage, Width, Height, Depth, Diameter, Comment, ItemStatus, ReceiveDate, ProvidedMaterial, CreatedBy, CreatedDate, CreatedUTCDate, DeliveryComment, GST, CostPrice, IsDeleted, OfferId, InstantUnitPrice, InstantWidth, InstantHeight, InstantDepth, InstantDiameter, InstantCostPrice, ReadyToDeliveredDate, DefaultProductVendorId, IsQuantityOnHold, StockQty, DimensionUnitId)
 		SELECT ParentOrderSetItemId
 			,OrderId
 			,OrderSetId
@@ -209,6 +209,7 @@ BEGIN
 			,DefaultProductVendorId
 			,IsQuantityOnHold
 			,StockQty
+			,DimensionUnitId
 		FROM OrderSetItems osi WITH (NOLOCK)
 		WHERE osi.OrderId = @OrderId
 		AND osi.OrderSetItemId = @OrderSetItemId

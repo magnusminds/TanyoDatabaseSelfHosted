@@ -226,6 +226,7 @@ BEGIN
    ,ProductImage VARCHAR(MAX)  
    ,UnitSalePrice NUMERIC(18, 2)  
    ,IsSellByPerSQFT BIT  
+   ,DimensionUnitId INT  
    )  
   
   CREATE TABLE #tmpOrderSetItemsAddOns (  
@@ -260,6 +261,7 @@ BEGIN
    ,ProductImage VARCHAR(MAX)  
    ,UnitSalePrice NUMERIC(18, 2)  
    ,IsSellByPerSQFT BIT  
+   ,DimensionUnitId INT  
    )  
   
   INSERT INTO #tmpOrderSets (  
@@ -517,6 +519,7 @@ BEGIN
     ELSE [dbo].[GetProductPriceByDimension](@RoleId, @TenantID, p.ProductId, tosi.Width, tosi.Height, tosi.Depth, 1, @OrderId)  
     END  
    ,tosi.IsSellByPerSQFT = c.IsSellByPerSQFT  
+   ,tosi.DimensionUnitId = p.DimensionUnitId  
   FROM #tmpOrderSetItems tosi  
   INNER JOIN Products p WITH (NOLOCK) ON p.ProductId = tosi.SubjectId  
   INNER JOIN Categories c WITH (NOLOCK) ON c.CategoryId = p.CategoryId  
@@ -535,6 +538,7 @@ BEGIN
     ELSE [dbo].[GetProductPriceByDimension](@RoleId, @TenantID, p.ProductId, tosi.Width, tosi.Height, tosi.Depth, 1, @OrderId)  
     END  
    ,tosi.IsSellByPerSQFT = c.IsSellByPerSQFT  
+   ,tosi.DimensionUnitId = p.DimensionUnitId  
   FROM #tmpOrderSetItemsAddOns tosi  
   INNER JOIN Products p WITH (NOLOCK) ON p.ProductId = tosi.SubjectId  
   INNER JOIN Categories c WITH (NOLOCK) ON c.CategoryId = p.CategoryId  
@@ -887,6 +891,13 @@ BEGIN
        ,osi.DefaultProductVendorId = @DefaultProductVendorId  
        ,osi.ProductImage = ossi.ProductImage  
        ,OSI.UnitSalePrice = ossi.UnitSalePrice  
+       ,OSI.DimensionUnitId = CASE  
+        WHEN osi.SubjectId <> ossi.SubjectId  
+         OR osi.SubjectTypeId <> ossi.SubjectTypeId  
+         OR osi.DimensionUnitId IS NULL  
+         THEN ossi.DimensionUnitId  
+        ELSE osi.DimensionUnitId  
+        END  
        ,OSI.MRP = CASE   
         WHEN ossi.OfferId > 0  
          AND ossi.IsSellByPerSQFT = 1  
@@ -945,6 +956,7 @@ BEGIN
        ,UnitSalePrice  
        ,MRP  
        ,OfferPercentage  
+       ,DimensionUnitId  
        )  
       SELECT @NewOrderID  
        ,@NewOrderSetId  
@@ -990,6 +1002,7 @@ BEGIN
         ELSE 0  
         END  
        ,OFR.OfferPercentage  
+       ,osi.DimensionUnitId  
       FROM #tmpOrderSetItems osi  
       LEFT JOIN Offers OFR ON OFR.OfferId = osi.OfferId  
       WHERE GroupID = @incSetItems  
@@ -1102,6 +1115,13 @@ BEGIN
         ,osi.DefaultProductVendorId = @DefaultProductVendorId  
         ,osi.ProductImage = osia.ProductImage  
         ,OSI.UnitSalePrice = osia.UnitSalePrice  
+        ,OSI.DimensionUnitId = CASE  
+         WHEN osi.SubjectId <> osia.SubjectId  
+          OR osi.SubjectTypeId <> osia.SubjectTypeId  
+          OR osi.DimensionUnitId IS NULL  
+          THEN osia.DimensionUnitId  
+         ELSE osi.DimensionUnitId  
+         END  
         ,OSI.MRP = CASE   
          WHEN osia.OfferId > 0  
           AND osia.IsSellByPerSQFT = 1  
@@ -1162,6 +1182,7 @@ BEGIN
         ,UnitSalePrice  
         ,MRP  
         ,OfferPercentage  
+        ,DimensionUnitId  
         )  
        SELECT @NewOrderID  
         ,@NewOrderSetId  
@@ -1208,6 +1229,7 @@ BEGIN
          ELSE 0  
          END  
         ,OFR.OfferPercentage  
+        ,osia.DimensionUnitId  
        FROM #tmpOrderSetItemsAddOns osia  
        LEFT JOIN Offers OFR ON OFR.OfferId = osia.OfferId  
        WHERE OrderSetItemGroupID = @OrderSetItemGroupId  
