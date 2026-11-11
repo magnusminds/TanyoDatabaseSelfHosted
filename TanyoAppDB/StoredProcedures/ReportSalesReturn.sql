@@ -98,7 +98,7 @@ BEGIN
             ,ide.Quantity
             ,CAST
             (
-                CASE
+                ROUND(CASE
                     WHEN osi.OrderSetItemId IS NOT NULL
                          AND osi.Quantity > 0
                          AND (osi.AmountBeforeGST + osi.CGSTAmount + osi.SGSTAmount) > 0
@@ -106,7 +106,7 @@ BEGIN
                              * ide.Quantity / osi.Quantity
 
                     ELSE ide.Quantity * ISNULL(p.RetailerPrice,0)
-                END
+                END, 0)
                 AS DECIMAL(18,2)
             )
             ,ISNULL(w.Name,'-')

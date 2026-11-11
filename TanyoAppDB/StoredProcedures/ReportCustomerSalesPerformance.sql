@@ -153,7 +153,7 @@ BEGIN
                 ,q.CustomerTypeName
                 ,b.BucketIndex
                 ,b.BucketLabel
-                ,ISNULL(SUM(ISNULL(o.TotalAmt, o.TotalAmount)), 0) AS BucketAmount
+                ,ISNULL(ROUND(SUM(ISNULL(o.TotalAmt, o.TotalAmount)),0), 0) AS BucketAmount
                 ,COUNT(o.OrderId) AS BucketOrderCount
                 ,q.RangeTotalSales
                 ,q.RangeTotalOrders
@@ -195,12 +195,12 @@ BEGIN
 		DECLARE @ObjectName VARCHAR(500)
 			,@ErrorMsg VARCHAR(MAX);
 
-		SET @ObjectName = OBJECT_NAME(@@PROCID);
-		SET @ErrorMsg = ERROR_MESSAGE();
+        SET @ObjectName = OBJECT_NAME(@@PROCID);
+        SET @ErrorMsg = ERROR_MESSAGE();
 
 		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
 			,@ErrorMsg = @ErrorMsg;
-END CATCH
+    END CATCH
 END;
 
 GO

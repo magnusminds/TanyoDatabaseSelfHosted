@@ -42,15 +42,15 @@ BEGIN
         FROM (
             SELECT c.CustomerId                                                       AS InteriorId
                   ,COALESCE(NULLIF(LTRIM(RTRIM(c.CompanyName)), ''), LTRIM(RTRIM(c.FirstName + ' ' + ISNULL(c.LastName, '')))) AS InteriorName
-                  ,CAST(SUM(ISNULL(o.TotalAmt, o.TotalAmount)) AS DECIMAL(18, 2))       AS InquiryAmount
+                  ,CAST(ROUND(SUM(ISNULL(o.TotalAmt, o.TotalAmount)), 0) AS DECIMAL(18, 2))       AS InquiryAmount
                   ,COUNT(1)                                                           AS InquiryCount
-                  ,CAST(SUM(CASE WHEN o.Status >= 2 AND o.Status <> 8 THEN ISNULL(o.TotalAmt, o.TotalAmount) ELSE 0 END) AS DECIMAL(18, 2)) AS ConvertedAmount
+                  ,CAST(ROUND(SUM(CASE WHEN o.Status >= 2 AND o.Status <> 8 THEN ISNULL(o.TotalAmt, o.TotalAmount) ELSE 0 END), 0) AS DECIMAL(18, 2)) AS ConvertedAmount
                   ,SUM(CASE WHEN o.Status >= 2 AND o.Status <> 8 THEN 1 ELSE 0 END)  AS ConvertedCount
             FROM Orders o WITH (NOLOCK)
             INNER JOIN Customers c WITH (NOLOCK)
                     ON c.CustomerId = o.RefferedBy
                    AND c.TenantId   = @TenantId
-                   AND c.CustomerTypeId = 2                     -- Interior
+                   AND c.CustomerTypeId IN (1,2)                     -- Customer, Interior
                    AND c.IsDeleted  = 0
             WHERE o.TenantId = @TenantId
               AND o.Status NOT IN (6, 9)                          -- live inquiries only (drop Canceled, Delete)
@@ -79,10 +79,10 @@ BEGIN
   DECLARE @ObjectName VARCHAR(500)  
    ,@ErrorMsg VARCHAR(MAX);  
   
-  SET @ObjectName = OBJECT_NAME(@@PROCID);  
-  SET @ErrorMsg = ERROR_MESSAGE();  
+        SET @ObjectName = OBJECT_NAME(@@PROCID);
+        SET @ErrorMsg = ERROR_MESSAGE();
   
   EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName  
    ,@ErrorMsg = @ErrorMsg;  
-    END CATCH  
+    END CATCH
 END;  

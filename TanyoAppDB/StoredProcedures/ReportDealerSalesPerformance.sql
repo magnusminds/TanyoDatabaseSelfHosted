@@ -109,7 +109,7 @@ BEGIN
                 ,LTRIM(RTRIM(ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, ''))) AS CustomerName
                 ,c.PhoneNumber
                 ,ISNULL(ct.Name, '') AS CustomerTypeName
-                ,ISNULL(SUM(ISNULL(o.TotalAmt, o.TotalAmount)), 0) AS RangeTotalSales
+                ,ISNULL(ROUND(SUM(ISNULL(o.TotalAmt, o.TotalAmount)),0), 0) AS RangeTotalSales
                 ,COUNT(o.OrderId) AS RangeTotalOrders
         INTO #QualifyingCustomers
         FROM Customers c
