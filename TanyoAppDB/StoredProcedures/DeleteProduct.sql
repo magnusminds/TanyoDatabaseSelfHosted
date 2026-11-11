@@ -74,6 +74,7 @@ BEGIN
 					5
 					,9
 					) -- Delivered And deleted
+				AND NOT (O.Status = 0 AND O.IsArchive = 1)
 				AND O.TenantId = @TenantId
 				AND OSI.IsDeleted = 0
 			)
