@@ -26,6 +26,8 @@ CREATE TABLE [dbo].[POProducts] (
     [IsInterState]          BIT                                                  DEFAULT ((0)) NOT NULL,
     [IGSTAmount]            NUMERIC (18, 2) NULL,
     [LabelId]               BIGINT                                               NULL,
+    [IsPinned]              BIT                                                  CONSTRAINT [DF_POProducts_IsPinned] DEFAULT ((0)) NOT NULL,
+    [IsFlagged]             BIT                                                  CONSTRAINT [DF_POProducts_IsFlagged] DEFAULT ((0)) NOT NULL,
     PRIMARY KEY CLUSTERED ([POProductId] ASC)
 );
 
