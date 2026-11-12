@@ -1,4 +1,3 @@
-
 /*  
  EXEC [dbo].[ListCategories]   
   @TenantId = 2  
@@ -12,8 +11,9 @@
   ,@SortOrder = 'ASC'  
   ,@CategoryTypeId = 1  
   ,@CategoryId = NULL  
+  ,@IsInHouseManufacturing = NULL  
 */  
-CREATE PROCEDURE [dbo].[ListCategories] (  
+ALTER PROCEDURE [dbo].[ListCategories] (  
  @TenantId INT  
  ,@CategoryName VARCHAR(50) = NULL  
  ,@FriendlyName VARCHAR(50) = NULL  
@@ -25,6 +25,7 @@ CREATE PROCEDURE [dbo].[ListCategories] (
  ,@SortOrder VARCHAR(50) = 'DESC'  
  ,@CategoryTypeId BIGINT = 1   
  ,@CategoryId BIGINT = NULL  
+ ,@IsInHouseManufacturing INT = NULL  
  )  
 WITH ENCRYPTION
 AS
@@ -59,6 +60,10 @@ BEGIN
  AND (  
   @IsManufacturing IS NULL  
   OR IsManufacturing = @IsManufacturing  
+  )  
+ AND (  
+  @IsInHouseManufacturing IS NULL  
+  OR IsInHouseManufacturing = @IsInHouseManufacturing  
   )  
  AND (  
   @CategoryTypeId IS NULL  
@@ -160,6 +165,10 @@ BEGIN
   AND (  
    @IsManufacturing IS NULL  
    OR c.IsManufacturing = @IsManufacturing  
+   )  
+  AND (  
+   @IsInHouseManufacturing IS NULL  
+   OR c.IsInHouseManufacturing = @IsInHouseManufacturing  
    )  
   AND (  
    @CategoryTypeId IS NULL  
@@ -290,4 +299,3 @@ BEGIN
 END
 
 GO
-

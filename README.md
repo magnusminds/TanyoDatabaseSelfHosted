@@ -16,6 +16,12 @@ dotnet build .\TanyoAppDB\TanyoAppDB.sqlproj
 
 The generated DACPAC files are written to each project's `bin\Debug` directory and are excluded from Git.
 
+## SQL file encoding
+
+Save all `.sql` files as **UTF-8** (no BOM). Do not use SSMS **Unicode** / **Unicode (Big-Endian)** — those encodings are UTF-16 and GitHub shows them as binary with no readable diff.
+
+In SSMS use **File → Save with Encoding… → UTF-8**.
+
 ## Self-hosted repository sync
 
 The `magnusminds/TanyoDatabseSelfHosted` repository pulls this repository every five minutes through its own GitHub Actions workflow. The workflow keeps non-table SQL unchanged, including `WITH ENCRYPTION`, and removes dynamic data masking clauses from table definitions. It can also be started manually from the target repository's Actions page.
