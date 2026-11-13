@@ -38,21 +38,11 @@ BEGIN
 			,POT.UnitPrice AS BuyUnitPrice
 			,PO.Status AS [Status]
 			,V.VendorName
-			,PT.ProductTitle
-			,PT.ModelNo
-			,PT.Width
-			,PT.Height
-			,PT.Depth
-			,PT.Diameter
-			,PT.DimensionUnitId
-			,PT.CoverImage
 			,SUM(POT.UnitPrice * POT.Quantity) OVER () / SUM(POT.Quantity) OVER () AS AverageUnitPrice
 			,COUNT(*) OVER () AS TotalCount
 		FROM POProducts PO WITH (NOLOCK)
 		INNER JOIN POProductItems POT WITH (NOLOCK) ON PO.POProductId = POT.POProductId
 		INNER JOIN Vendors V WITH (NOLOCK) ON V.VendorId = PO.VendorId
-		INNER JOIN Products PT WITH (NOLOCK) ON PT.ProductId = POT.ProductId
-			AND PO.TenantId = PT.TenantId
 		WHERE PO.TenantId = @TenantId
 			AND POT.ProductId = @ProductId
 			AND PO.VendorId IN (
@@ -127,6 +117,7 @@ BEGIN
 
 		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
 			,@ErrorMsg = @ErrorMsg;
+		THROW;
 	END CATCH
 END
 
