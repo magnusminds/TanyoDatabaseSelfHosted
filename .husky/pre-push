@@ -1,0 +1,59 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# --- Branch name guard: feature/ | hotfix/ | bugfix/ + TAN-####-description (long-lived branches pass) ---
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+case "$BRANCH" in
+  dev|main|master|HEAD) ;;
+  *)
+    if ! printf '%s' "$BRANCH" | grep -Eq '^(feature|hotfix|bugfix)/TAN-[0-9]+(-[A-Za-z0-9._-]+)?$'; then
+      echo ""
+      echo "  ERROR: Invalid branch name: \"$BRANCH\""
+      echo ""
+      echo "  Required:  feature/TAN-####[-short-description]"
+      echo "             hotfix/TAN-####[-...]   (bugfix/ also allowed)"
+      echo "  Examples:  feature/TAN-4418-dealer-sales-performance-reports"
+      echo "             feature/TAN-4418   (description optional — also valid)"
+      echo ""
+      echo "  Fix:  git branch -m \"$BRANCH\" feature/TAN-####-short-description"
+      echo "  To bypass (not recommended): git push --no-verify"
+      echo ""
+      exit 1
+    fi
+    ;;
+esac
+# --- end branch guard ---
+
+PATTERN='^TAN-[0-9]+:'
+FAIL=0
+
+LOCAL_COMMITS=$(git log --first-parent @{u}..HEAD --pretty=format:"%H %s" --no-merges 2>/dev/null || \
+                git log --pretty=format:"%H %s" --no-merges -20)
+
+if [ -z "$LOCAL_COMMITS" ]; then
+  exit 0
+fi
+
+while IFS= read -r line; do
+  SHA=$(echo "$line" | cut -d' ' -f1)
+  MSG=$(echo "$line" | cut -d' ' -f2-)
+
+  if echo "$MSG" | grep -qE "^(Merge |Revert )"; then
+    continue
+  fi
+
+  if echo "$MSG" | grep -qE "$PATTERN"; then
+    continue
+  fi
+
+  echo "  FAIL ${SHA:0:7}  $MSG"
+  FAIL=1
+done <<< "$LOCAL_COMMITS"
+
+if [ "$FAIL" -eq 1 ]; then
+  echo ""
+  echo "Push blocked. Every commit must start with TAN-####: (e.g. TAN-3964: Fix login button)"
+  echo "Use: git commit --amend  or  git rebase -i  to fix commit messages."
+  echo "To bypass (not recommended): git push --no-verify"
+  exit 1
+fi

@@ -1,0 +1,29 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+if [ -z "$1" ]; then
+  echo "ERROR: No commit message file provided."
+  exit 1
+fi
+
+first_line=$(head -n 1 "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+if echo "$first_line" | grep -qE '^(Merge |Revert )'; then
+  exit 0
+fi
+
+if echo "$first_line" | grep -qE '^TAN-[0-9]+:'; then
+  exit 0
+fi
+
+echo ""
+echo "  ERROR: Invalid commit message."
+echo ""
+echo "  Message:   \"$first_line\""
+echo ""
+echo "  Required format:  TAN-####: <description>"
+echo "  Example:          TAN-3964: Portal disable save button on upload image"
+echo ""
+echo "  Tip: Use the ticket number from your TAN/Backlog item."
+echo ""
+exit 1
