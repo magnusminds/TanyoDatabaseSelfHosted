@@ -1,3 +1,15 @@
+/*
+ EXEC [dbo].[ReportProductSalesDetailsDrill] 
+ @TenantId = 1206
+ ,@FromDate = NULL  
+ ,@ToDate = NULL  
+ ,@SalesmanId = NULL  
+ ,@CategoryId = NULL  
+ ,@PageIndex = 1  
+ ,@PageSize = 50  
+ ,@SortBy = 'CountOfCategory'  
+ ,@SortOrder = 'ASC'   
+*/
 CREATE PROCEDURE [dbo].[ReportProductSalesDetailsDrill] (  
  @TenantId INT  
  ,@FromDate DATE = NULL  
@@ -46,7 +58,7 @@ BEGIN
   AND (@SalesmanId IS NULL OR o.SalesmanId = @SalesmanId)  
   AND o.STATUS IN (2,3,4,5)  
   AND o.ApprovedDate >= @FromDate  
-  AND o.ApprovedDate <= @ToDate  
+  AND o.ApprovedDate <= DATEADD(DAY, 1, @ToDate)
   ORDER BY CASE   
     WHEN @SortBy = 'OrderNo'  
      AND @SortOrder = 'ASC'  

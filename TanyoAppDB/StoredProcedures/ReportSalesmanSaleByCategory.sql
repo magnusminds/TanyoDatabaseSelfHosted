@@ -1,3 +1,17 @@
+/*
+   EXEC [dbo].[ReportSalesmanSaleByCategory]
+    @TenantId = 1206,
+    @FromDate = NULL,
+    @ToDate = NULL,
+    @SalesmanId = NULL,
+    @CategoryId = NULL,
+    @PageIndex = 1,
+    @PageSize = 50,
+    @SortBy = 'TotalProductQuantities',
+    @SortOrder = 'ASC',
+    @OrderType = NULL,
+    @GroupBy = 1;
+*/
 CREATE PROCEDURE [dbo].[ReportSalesmanSaleByCategory] (  
  @TenantId INT  
  ,@FromDate DATE = NULL  
@@ -46,7 +60,7 @@ BEGIN
    )  
   AND (  
    @ToDate IS NULL  
-   OR o.ApprovedDate <= @ToDate  
+   OR o.ApprovedDate < DATEADD(DAY, 1, @ToDate)
    )  
   AND (  
    @SalesmanId IS NULL  

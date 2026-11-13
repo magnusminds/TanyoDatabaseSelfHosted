@@ -37,7 +37,7 @@ BEGIN
 					ELSE ' ' + C.LastName
 					END
 				) AS CustomerName
-			,O.AmountBeforeGST + O.SpecialDiscount AS TotalAmount
+			,O.AmountBeforeGST + O.CGSTAmount + O.SGSTAmount + O.SpecialDiscount AS TotalAmount
 		FROM Orders O WITH (NOLOCK)
 		INNER JOIN Customers C WITH (NOLOCK) ON O.CustomerId = C.CustomerId
 		WHERE O.TenantId = @TenantId

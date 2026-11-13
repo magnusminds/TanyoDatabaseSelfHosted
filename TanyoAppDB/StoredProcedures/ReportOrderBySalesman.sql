@@ -32,7 +32,7 @@ BEGIN
 		;WITH OrderSummary AS (
 			SELECT o.SalesmanId
 				,COUNT(DISTINCT o.OrderId) AS NoofOrders
-				,SUM(o.AmountBeforeGST + o.SpecialDiscount) AS ValueofOrders
+				,SUM(o.AmountBeforeGST + o.CGSTAmount + o.SGSTAmount + o.SpecialDiscount) AS ValueofOrders
 				,SUM(o.CGSTAmount + o.SGSTAmount) AS GSTAmount
 			FROM Orders o WITH (NOLOCK)
 			WHERE o.TenantId = @TenantId
