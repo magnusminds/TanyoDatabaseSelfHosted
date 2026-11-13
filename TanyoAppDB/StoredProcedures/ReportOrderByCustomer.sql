@@ -32,8 +32,8 @@ BEGIN
 		AS (
 			SELECT o.CustomerID
 				,COUNT(DISTINCT o.OrderId) AS NoofOrders
-				,SUM(o.AmountBeforeGST + o.SpecialDiscount) AS ValueofOrders
-				,SUM(o.CGSTAmount + o.SGSTAmount) AS GSTAmount
+				,SUM(ROUND(o.AmountBeforeGST + o.SpecialDiscount,0)) AS ValueofOrders
+				,SUM(ROUND(o.CGSTAmount + o.SGSTAmount,0)) AS GSTAmount
 			FROM Orders o WITH (NOLOCK)
 			WHERE o.TenantId = @TenantId
 				AND o.Status IN (
