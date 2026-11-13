@@ -44,7 +44,9 @@ BEGIN
             OSI.OrderId = @OrderId
             AND OSI.IsDeleted = 0
             AND OSI.ParentOrderSetItemId IS NULL
-            AND C.IsManufacturing = 1
+            -- TAN-4714: work orders only for in-house manufacturing
+			AND C.IsManufacturing = 1
+			AND C.IsInHouseManufacturing = 1
             AND EXISTS (
                 SELECT 1 
                 FROM ProductMaterials PM WITH (NOLOCK)

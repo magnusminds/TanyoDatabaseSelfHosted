@@ -86,7 +86,9 @@ BEGIN
 	INNER JOIN Products p ON p.ProductId = OSI.SubjectId
 	INNER JOIN Categories c ON c.CategoryId = p.CategoryId
 	WHERE OrderId = @OrderId
+		-- TAN-4714: only in-house manufacturing enters the manufacturing workflow path
 		AND c.IsManufacturing = 1
+		AND c.IsInHouseManufacturing = 1
 		AND osi.IsDeleted = 0
 		AND NOT EXISTS (SELECT 1 
 						FROM OrderManufacturingWorkflows OMWF WITH (NOLOCK)

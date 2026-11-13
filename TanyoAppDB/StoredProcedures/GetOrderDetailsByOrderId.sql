@@ -49,7 +49,9 @@ BEGIN
 						LEFT JOIN AspNetUsers UC WITH (NOLOCK) ON PWF.ContractorUserID = UC.UserId
 						LEFT JOIN AspNetUsers US WITH (NOLOCK) ON PWF.SupervisorUserID = US.UserId
 						WHERE PWF.ProductID = OSI.SubjectId
+						-- TAN-4714: workflows only for in-house manufacturing
 						AND C.IsManufacturing = 1
+						AND C.IsInHouseManufacturing = 1
 						ORDER BY PWF.Position
 						FOR JSON PATH
 					) AS WorkflowDetails
@@ -61,13 +63,18 @@ BEGIN
 						INNER JOIN Vendors V WITH (NOLOCK) ON PVMP.VendorId = V.VendorId
 						WHERE PVMP.ProductId = OSI.SubjectId
 						AND PVMP.IsDeleted = 0
-						AND C.IsManufacturing = 0 -- When Product have workflow and vendor mapping than consider only as workflow product
+						-- TAN-4714: vendors for imported OR outsourced manufacturing (not in-house)
+						AND (
+							C.IsManufacturing = 0
+							OR (C.IsManufacturing = 1 AND C.IsInHouseManufacturing = 0)
+							)
 						FOR JSON PATH
 					) AS VendorDetails
 					
 					,JSON_QUERY(
 						CASE 
-							WHEN C.IsManufacturing = 1 THEN
+							-- TAN-4714: BOM only for in-house manufacturing
+							WHEN C.IsManufacturing = 1 AND C.IsInHouseManufacturing = 1 THEN
 								(
 									SELECT 
 										PM.ProductMaterialID,

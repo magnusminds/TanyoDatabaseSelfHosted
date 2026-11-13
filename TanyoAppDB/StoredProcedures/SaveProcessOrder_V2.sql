@@ -164,12 +164,14 @@ BEGIN
 					)
 				)
 			,ItemStatus = CASE 
-				-- Manufacturing product (Tenant + Product both enabled)
+				-- TAN-4714: in-house manufacturing only (outsourced treated like imported)
 				WHEN @IsManufacturing = 1
 					AND ISNULL(c.IsManufacturing, 0) = 1
+					AND c.IsInHouseManufacturing = 1
 					THEN 0 -- ReadyToManufacturing
-						-- Non-manufacturing product
+						-- Imported OR outsourced manufacturing
 				WHEN ISNULL(c.IsManufacturing, 0) = 0
+					OR (ISNULL(c.IsManufacturing, 0) = 1 AND c.IsInHouseManufacturing = 0)
 					THEN CASE 
 							WHEN @IsEnableProductProcessingWorkflow = 1
 								THEN 4 -- Pending
