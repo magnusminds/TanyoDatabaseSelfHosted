@@ -21,7 +21,7 @@ BEGIN
 			,O.OrderNo
 			,FO.FollowUpDate
 			,FO.FollowUpComment
-			,O.TotalAmount
+			,ROUND(O.AmountBeforeGST, 0) AS TotalAmount
 			,C.FirstName + ' ' + ISNULL(C.LastName, '') AS CustomerName
 			,AU.FirstName + ' ' + ISNULL(AU.LastName, '') + CASE 
 				WHEN AU.IsDeleted = 1

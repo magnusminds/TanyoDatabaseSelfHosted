@@ -32,7 +32,7 @@ BEGIN
    ,p.ModelNo  
    ,ISNULL(osi.ProductImage, '') AS ProductImage  
    ,osi.Quantity AS ProductQantity  
-   ,osi.TotalAmount AS ProductSalePrice  
+   ,osi.AmountBeforeGST AS ProductSalePrice  
    ,osi.ItemStatus as OrderSetItemStatus  
    ,COUNT(1) OVER (PARTITION BY 1) AS TotalCount  
   FROM Products p WITH (NOLOCK)  
@@ -90,12 +90,12 @@ BEGIN
    ,CASE   
     WHEN @SortBy = 'Price'  
      AND @SortOrder = 'ASC'  
-     THEN osi.TotalAmount  
+     THEN osi.AmountBeforeGST  
     END ASC  
    ,CASE   
     WHEN @SortBy = 'Price'  
      AND @SortOrder = 'DESC'  
-     THEN osi.TotalAmount  
+     THEN osi.AmountBeforeGST  
     END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS  
   
   FETCH NEXT @PageSize ROWS ONLY  

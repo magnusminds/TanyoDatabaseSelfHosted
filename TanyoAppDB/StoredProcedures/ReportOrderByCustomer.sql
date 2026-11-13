@@ -32,11 +32,7 @@ BEGIN
 		AS (
 			SELECT o.CustomerID
 				,COUNT(DISTINCT o.OrderId) AS NoofOrders
-				,SUM(CASE 
-						WHEN o.GSTType = 1
-							THEN o.AmountBeforeGST + o.SpecialDiscount
-						ELSE o.TotalAmount + o.SpecialDiscount
-						END) AS ValueofOrders
+				,SUM(o.AmountBeforeGST + o.SpecialDiscount) AS ValueofOrders
 				,SUM(o.CGSTAmount + o.SGSTAmount) AS GSTAmount
 			FROM Orders o WITH (NOLOCK)
 			WHERE o.TenantId = @TenantId

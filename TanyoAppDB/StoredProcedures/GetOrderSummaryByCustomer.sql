@@ -13,7 +13,7 @@ BEGIN
 	SELECT ORD.CreatedDate AS InquiryDate
 		,ORD.OrderNo
 		,ORD.STATUS
-		,ORD.TotalAmount
+		,ROUND(ORD.TotalAmt, 0) As TotalAmount
 		,CONCAT (
 			AU.FirstName
 			,' '
@@ -77,12 +77,12 @@ BEGIN
 		,CASE 
 			WHEN @SortBy = 'TotalAmount'
 				AND @SortOrder = 'DESC'
-				THEN ORD.TotalAmount
+				THEN ORD.TotalAmt
 			END DESC
 		,CASE 
 			WHEN @SortBy = 'TotalAmount'
 				AND @SortOrder = 'ASC'
-				THEN ORD.TotalAmount
+				THEN ORD.TotalAmt
 			END ASC OFFSET(@PageIndex - 1) * @PageSize ROWS
 
 	FETCH NEXT @PageSize ROWS ONLY

@@ -37,11 +37,7 @@ BEGIN
 					ELSE ' ' + C.LastName
 					END
 				) AS CustomerName
-			,CASE 
-				WHEN o.GSTType = 1
-					THEN o.AmountBeforeGST + o.SpecialDiscount
-				ELSE O.TotalAmount + o.SpecialDiscount
-				END AS TotalAmount
+			,O.AmountBeforeGST + O.SpecialDiscount AS TotalAmount
 		FROM Orders O WITH (NOLOCK)
 		INNER JOIN Customers C WITH (NOLOCK) ON O.CustomerId = C.CustomerId
 		WHERE O.TenantId = @TenantId

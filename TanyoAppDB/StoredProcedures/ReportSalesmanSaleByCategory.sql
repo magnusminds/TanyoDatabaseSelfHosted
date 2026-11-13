@@ -29,7 +29,7 @@ BEGIN
    ,c.CategoryName AS CategoryName  
    ,o.SalesmanId  
    ,au.FirstName + ' ' + au.LastName  + CASE WHEN au.IsDeleted = 1 THEN ' (Inactive)' ELSE '' END AS SalesmanName  
-   ,osi.TotalAmount
+   ,osi.AmountBeforeGST
    ,osi.Quantity
   FROM Orders o WITH (NOLOCK)  
   INNER JOIN AspNetUsers au WITH (NOLOCK) ON au.UserId = o.SalesmanId  
@@ -67,7 +67,7 @@ BEGIN
         CASE WHEN @GroupBy = 1 AND @CategoryId IS NULL THEN 'All Categories' ELSE CategoryName END AS CategoryName,
         CASE WHEN @GroupBy = 2 AND @SalesmanId IS NULL THEN 0 ELSE SalesmanId END AS SalesmanId,
         CASE WHEN @GroupBy = 2 AND @SalesmanId IS NULL THEN 'All Salesmen' ELSE SalesmanName END AS SalesmanName,
-        SUM(TotalAmount) AS TotalSales,
+        SUM(AmountBeforeGST) AS TotalSales,
         SUM(Quantity) AS TotalProductQuantities
     FROM RawData
     GROUP BY 
@@ -77,7 +77,7 @@ BEGIN
         CASE WHEN @GroupBy = 2 AND @SalesmanId IS NULL THEN 'All Salesmen' ELSE SalesmanName END
   ),
   GrandTotals AS (
-    SELECT SUM(TotalAmount) AS GrandTotalSales, SUM(Quantity) AS GrandTotalProductQuantities
+    SELECT SUM(AmountBeforeGST) AS GrandTotalSales, SUM(Quantity) AS GrandTotalProductQuantities
     FROM RawData
   )
   SELECT 

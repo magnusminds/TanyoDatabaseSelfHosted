@@ -70,7 +70,7 @@ BEGIN
             ,LA.LastCommentDate
             ,FO.FollowUpDate
             ,FO.FollowUpComment
-            ,O.TotalAmount AS InquiryAmount
+            ,ROUND(O.AmountBeforeGST, 0) AS InquiryAmount
             ,C.FirstName + ' ' + ISNULL(C.LastName, '') AS CustomerName
             ,C.CustomerId
             ,AU.FirstName + ' ' + ISNULL(AU.LastName, '') 
@@ -143,8 +143,8 @@ BEGIN
                 + CASE WHEN AU.IsDeleted = 1 THEN ' (Inactive)' ELSE '' END
             END DESC,
 
-            CASE WHEN @SortBy = 'InquiryAmount' AND @SortOrder = 'ASC' THEN O.TotalAmount END ASC,
-            CASE WHEN @SortBy = 'InquiryAmount' AND @SortOrder = 'DESC' THEN O.TotalAmount END DESC,
+            CASE WHEN @SortBy = 'InquiryAmount' AND @SortOrder = 'ASC' THEN O.AmountBeforeGST END ASC,
+            CASE WHEN @SortBy = 'InquiryAmount' AND @SortOrder = 'DESC' THEN O.AmountBeforeGST END DESC,
 
             CASE WHEN @SortBy = 'LastCommentDate' AND @SortOrder = 'ASC' THEN LA.LastCommentDate END ASC,
             CASE WHEN @SortBy = 'LastCommentDate' AND @SortOrder = 'DESC' THEN LA.LastCommentDate END DESC,
