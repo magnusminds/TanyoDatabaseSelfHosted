@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[App_List_GetStockOnHoldOrders] (
+CREATE PROCEDURE [dbo].[zApp_List_GetStockOnHoldOrders] (
 	@TenantId INT
 	,@SalesmanName NVARCHAR(200) = NULL
 	,@PageIndex INT = 1
