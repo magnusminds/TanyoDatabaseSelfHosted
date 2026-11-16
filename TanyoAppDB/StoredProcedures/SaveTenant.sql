@@ -124,6 +124,8 @@ BEGIN
 				,CreatedBy
 				,CreatedDate
 				,CreatedUTCDate
+				,UseMarginMultiplierForPricing
+				,UseAsOfNowStock
 				)
 			SELECT @TenantId
 				,1
@@ -132,6 +134,8 @@ BEGIN
 				,1
 				,@DateOffset
 				,@DateUTC
+				,1
+				,1
 
 			PRINT 'Tenant Configuration Created Successfully'
 
