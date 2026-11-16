@@ -98,6 +98,7 @@ BEGIN
 				FROM ProductQuantitiesByWarehouse PW WITH (NOLOCK)
 				INNER JOIN Warehouse W WITH (NOLOCK) ON PW.WarehouseId = W.Id
 				WHERE PW.ProductId = @ProductId
+					AND W.IsDeleted = 0
 					AND (
 						@WarehouseId IS NULL
 						OR @WarehouseId = - 1
