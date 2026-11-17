@@ -22,6 +22,10 @@ BEGIN
 	BEGIN TRY
 		SET NOCOUNT ON;
 
+		-- Explicit NULL from callers overrides param defaults; normalize so OFFSET/FETCH never see NULL.
+		SET @Page = ISNULL(NULLIF(@Page, 0), 1);
+		SET @PageSize = ISNULL(NULLIF(@PageSize, 0), 2147483647);
+
 		DROP TABLE IF EXISTS #LookupValue
 
 		DECLARE @VendorTenantId INT
