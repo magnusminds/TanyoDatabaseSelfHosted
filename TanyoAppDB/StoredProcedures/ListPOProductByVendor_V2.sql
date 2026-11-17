@@ -5,19 +5,23 @@ SELECT * FROM Vendors WHERE TenantId = 2
     ,@VendorId = 4
     ,@Search = NULL
 	,@IsAddOn = NULL
+	,@Page = 1
+	,@PageSize = 2147483647
 */
-CREATE PROCEDURE [dbo].[ListPOProductByVendor_V2] (
+CREATE OR ALTER PROCEDURE [dbo].[ListPOProductByVendor_V2] (
 	@TenantId BIGINT
 	,@VendorId BIGINT
 	,@Search VARCHAR(100) = NULL
 	,@IsAddOn BIT = NULL
+	,@Page INT = 1
+	,@PageSize INT = 2147483647
 	)
 WITH ENCRYPTION
 AS
 BEGIN
-	SET NOCOUNT ON;
-
 	BEGIN TRY
+		SET NOCOUNT ON;
+
 		DROP TABLE IF EXISTS #LookupValue
 
 		DECLARE @VendorTenantId INT
@@ -178,15 +182,32 @@ BEGIN
 		WHERE p.TenantId = @TenantId
 			AND p.Status = 1
 			AND (
-				NULLIF(@Search, '') IS NULL
-				OR p.ModelNo LIKE '%' + @Search + '%'
-				OR p.ProductTitle LIKE '%' + @Search + '%'
+				-- Empty search: vendor-mapped products only
+				(
+					NULLIF(@Search, '') IS NULL
+					AND pvm.ProductId IS NOT NULL
+					)
+				OR
+				-- With search: mapped + unmapped matching title/model
+				(
+					NULLIF(@Search, '') IS NOT NULL
+					AND (
+						p.ModelNo LIKE '%' + @Search + '%'
+						OR p.ProductTitle LIKE '%' + @Search + '%'
+						)
+					)
 				)
 			AND (
 				@IsAddOn IS NULL
 				OR @IsAddOn = 0
 				OR c.IsVisibleInAddOn = @IsAddOn
 				)
+		ORDER BY CASE WHEN pvm.ProductId IS NOT NULL THEN 0 ELSE 1 END
+			,p.ProductTitle
+			,p.ProductId
+
+		OFFSET(@Page - 1) * @PageSize ROWS
+		FETCH NEXT @PageSize ROWS ONLY;
 	END TRY
 
 	BEGIN CATCH
@@ -200,6 +221,3 @@ BEGIN
 			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
-
-GO
-
