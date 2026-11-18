@@ -100,9 +100,12 @@ BEGIN
   FROM AspNetRoleClaims WITH (NOLOCK)  
   WHERE RoleId = @RoleId  
    AND ClaimValue IN (  
-    'Permissions.App.Order.Approve'  
-    ,'Permissions.App.Order.SuperAccess'  
-    ,'Permissions.App.Order.WholeselerPrice'  
+    'Permissions.App.Order.Approve'
+    ,'Permissions.General.Order.Approve'
+    ,'Permissions.App.Order.SuperAccess'
+    ,'Permissions.General.Order.SuperAccess'
+    ,'Permissions.App.Order.WholeselerPrice'
+    ,'Permissions.General.Order.WholeselerPrice'  
     );  
   
   SET @IsAdmin = ISNULL(@IsAdmin, 0);  
