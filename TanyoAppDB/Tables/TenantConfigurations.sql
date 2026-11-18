@@ -34,6 +34,7 @@ CREATE TABLE [dbo].[TenantConfigurations] (
     [ShowExactStockQuantityInShare]   BIT                CONSTRAINT [DF_TenantConfigurations_ShowExactStockQuantityInShare] DEFAULT ((0)) NOT NULL,
     [ShowDimensionUnitOnOrderDocument]    BIT                CONSTRAINT [DF_TenantConfigurations_ShowDimensionUnitOnOrderDocument] DEFAULT ((0)) NOT NULL,
     [AllowManualCostPriceForManufacturing]    BIT                CONSTRAINT [DF_TenantConfigurations_AllowManualCostPriceForManufacturing] DEFAULT ((0)) NOT NULL,
+    [FollowUpLeadsAutoReminderTimes]    BIT                CONSTRAINT [DF_TenantConfigurations_FollowUpLeadsAutoReminderTimes] DEFAULT ((0)) NOT NULL,
     PRIMARY KEY CLUSTERED ([TenantConfigurationID] ASC)
 );
 

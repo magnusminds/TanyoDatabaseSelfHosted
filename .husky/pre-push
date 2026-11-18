@@ -27,8 +27,36 @@ esac
 PATTERN='^TAN-[0-9]+:'
 FAIL=0
 
-LOCAL_COMMITS=$(git log --first-parent @{u}..HEAD --pretty=format:"%H %s" --no-merges 2>/dev/null || \
-                git log --pretty=format:"%H %s" --no-merges -20)
+# stdin lines: <local-ref> <local-sha> <remote-ref> <remote-sha>
+# We validate ONLY the commits between the remote tip and what we are pushing.
+REMOTESHA=""
+LOCALSHA=""
+while read -r LREF LSB LREF_R RSHA; do
+  # Delete-only push: nothing to validate
+  [ "$LSB" = "0000000000000000000000000000000000000000" ] && exit 0
+  LOCALSHA="$LSB"
+  # If pushing a new remote branch, the remote sha is zeros; fall back to
+  # "commits not reachable from any existing remote branch".
+  if [ "$RSHA" = "0000000000000000000000000000000000000000" ]; then
+    REMOTESHA=""
+  else
+    REMOTESHA="$RSHA"
+  fi
+done
+
+if [ -z "$LOCALSHA" ]; then
+  # No stdin received (mismatched git version) — do nothing rather than guess
+  exit 0
+fi
+
+
+
+if [ -n "$REMOTESHA" ]; then
+  LOCAL_COMMITS=$(git log --first-parent "${REMOTESHA}..${LOCALSHA}" --pretty=format:"%H %s" --no-merges 2>/dev/null)
+else
+  # New branch: only commits not already on any remote branch
+  LOCAL_COMMITS=$(git log --first-parent "$LOCALSHA" --not --remotes --pretty=format:"%H %s" --no-merges 2>/dev/null)
+fi
 
 if [ -z "$LOCAL_COMMITS" ]; then
   exit 0
@@ -38,15 +66,16 @@ while IFS= read -r line; do
   SHA=$(echo "$line" | cut -d' ' -f1)
   MSG=$(echo "$line" | cut -d' ' -f2-)
 
-  if echo "$MSG" | grep -qE "^(Merge |Revert )"; then
-    continue
-  fi
+  # Skip merges/reverts
+  case "$MSG" in
+    "Merge "*|"Revert "*) continue ;;
+  esac
 
   if echo "$MSG" | grep -qE "$PATTERN"; then
     continue
   fi
 
-  echo "  FAIL ${SHA:0:7}  $MSG"
+  echo "  FAIL $(git rev-parse --short "$SHA" 2>/dev/null || echo "${SHA:0:7}")  $MSG"
   FAIL=1
 done <<< "$LOCAL_COMMITS"
 
