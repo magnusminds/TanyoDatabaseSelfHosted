@@ -52,14 +52,15 @@ BEGIN
     INTO #LeadReminderSchedule
     FROM dbo.Leads l WITH (NOLOCK)
     INNER JOIN #TenantConfig tc WITH (NOLOCK) ON tc.TenantId = l.TenantId
-    WHERE l.IsDeleted = 0
-      AND l.Status <> 6                     -- status 6 = Closed/Rejected; skip closed leads
+    LEFT JOIN dbo.EmployeeDetails ed WITH (NOLOCK)
+        ON ed.UserID = l.SalesmanId
+    WHERE
+      l.Status <> 6                     -- status 6 = Closed/Rejected; skip closed leads
       AND l.SalesmanId > 0
       AND CAST(l.CreatedDate AS DATE) >= @ReleaseDate
       AND NOT EXISTS (                      -- hammer stops once a follow-up WITH a comment exists
             SELECT 1 FROM dbo.FollowUpLeads ful WITH (NOLOCK)
             WHERE ful.LeadId = l.LeadId
-              AND ful.IsDelete = 0
               AND ful.FollowUpComment IS NOT NULL
               AND LTRIM(RTRIM(ful.FollowUpComment)) <> '');
 
@@ -97,7 +98,7 @@ BEGIN
         RS.ManagerUserId,
         MA.RegisteredFCMToken       AS ManagerFcmToken,
         (SELECT COUNT_BIG(*) FROM dbo.FollowUpLeads ful WITH (NOLOCK)
-          WHERE ful.LeadId = RS.LeadId AND ful.IsDelete = 0) AS FollowUpCount,
+          WHERE ful.LeadId = RS.LeadId) AS FollowUpCount,
         RS.ReminderStartAt,
         CASE WHEN RS.SalesmanReminderIndex = 0 THEN 1 ELSE 0 END AS IsNewInquiryFirstReminder,
         RS.SalesmanReminderIndex,
@@ -132,7 +133,7 @@ BEGIN
         RS.ManagerUserId,
         MA.RegisteredFCMToken,
         (SELECT COUNT_BIG(*) FROM dbo.FollowUpLeads ful WITH (NOLOCK)
-          WHERE ful.LeadId = RS.LeadId AND ful.IsDelete = 0) AS FollowUpCount,
+          WHERE ful.LeadId = RS.LeadId) AS FollowUpCount,
         RS.ReminderStartAt,
         CASE WHEN RS.SalesmanReminderIndex = 0 THEN 1 ELSE 0 END,
         RS.SalesmanReminderIndex,
