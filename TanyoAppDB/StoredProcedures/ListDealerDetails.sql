@@ -1,4 +1,4 @@
-CREATE   PROC [dbo].[ListDealerDetails] (
+CREATE PROC [dbo].[ListDealerDetails] (
 	@TenantId BIGINT
 	,@DealerName VARCHAR(100) = NULL
 	,@PhoneNumber VARCHAR(16) = NULL
@@ -130,12 +130,12 @@ BEGIN
 		ORDER BY CASE 
 				WHEN @SortBy = 'DealerName'
 					AND @SortOrder = 'ASC'
-					THEN (c.FirstName + ' ' + c.LastName)
+					THEN (c.FirstName + ' ' + ISNULL(c.LastName,''))
 				END
 			,CASE 
 				WHEN @SortBy = 'DealerName'
 					AND @SortOrder = 'DESC'
-					THEN (c.FirstName + ' ' + c.LastName)
+					THEN (c.FirstName + ' ' + ISNULL(c.LastName,''))
 				END DESC
 			,CASE 
 				WHEN @SortBy = 'EmailAddress'
