@@ -208,7 +208,7 @@ BEGIN
 	SELECT WD.WarehouseId
 		,W.Name
 	FROM #WarehouseDeliverDetails WD
-	INNER JOIN Warehouse w ON WD.WarehouseId = w.Id
+	INNER JOIN Warehouse w WITH (NOLOCK) ON WD.WarehouseId = w.Id
 	WHERE NOT EXISTS (
 			SELECT 1
 			FROM ProductQuantitiesByWarehouse PQW WITH (NOLOCK)
@@ -387,9 +387,9 @@ BEGIN
 					,@Description = 'Delivered ' + CAST((PSW.ProvidedQuantity) AS NVARCHAR(100)) + ' quantity from the ' + WH.Name + ' warehouse for order ' + CAST(@OrderNo AS NVARCHAR(50))
 					,@ProvidedQuantity = PSW.ProvidedQuantity
 					,@WarehouseName = WH.Name
-				FROM ProductQuantitiesByWarehouse pqw
+				FROM ProductQuantitiesByWarehouse pqw  WITH (NOLOCK)
 				INNER JOIN #ProductStockByWarehouse PSW ON PQW.ProductQuantityByWarehouseId = PSW.ProductQuantityByWarehouseId
-				INNER JOIN Warehouse WH ON WH.Id = pqw.WarehouseId
+				INNER JOIN Warehouse WH WITH (NOLOCK) ON WH.Id = pqw.WarehouseId
 				WHERE PSW.Rn = @Id
 
 				EXEC dbo.DeductProductWarehouseQuantity @TenantId = @TenantId
@@ -470,7 +470,7 @@ BEGIN
 				)
 			SELECT RMIW.RawMaterialInventoryByWarehouseId
 				,'RawMaterial Inventory has been updated from ' + CAST(RMIW.Quantity + RMQ.ProvidedQuantity AS NVARCHAR(100)) + ' to ' + CAST((RMIW.Quantity) AS NVARCHAR(100)) + ' (-' + CAST((RMQ.ProvidedQuantity) AS NVARCHAR(100)) + ') for order ' + CAST(@OrderNo AS NVARCHAR(500))
-			FROM RawMaterialInventoryByWarehouse rmiw
+			FROM RawMaterialInventoryByWarehouse rmiw  WITH (NOLOCK)
 			INNER JOIN #RawMaterialInventory RMI ON RMI.RawMaterialInventoryByWarehouseId = RMIW.RawMaterialInventoryByWarehouseId
 			INNER JOIN #RawMaterialQuantityDeduction RMQ ON RMQ.RawMaterialId = RMI.RawMaterialId;
 
