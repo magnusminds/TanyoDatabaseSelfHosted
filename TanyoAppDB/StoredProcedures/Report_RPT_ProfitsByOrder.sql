@@ -303,7 +303,7 @@ BEGIN
 					,ISNULL(CAST(SUM(osi.CGSTAmount + osi.SGSTAmount) AS INT), 0) AS GSTAmount
 					,ISNULL((- 1) * CAST(SUM(osi.SalesmanCommission) AS INT), 0) AS SalesmanCommission
 					,ISNULL((- 1) * CAST(SUM(osi.InteriorCommission) AS INT), 0) AS InteriorCommission
-					,CAST(SUM(ISNULL(osi.TotalAmount, 0) - ISNULL(osi.InteriorCommission, 0) - ISNULL(osi.SalesmanCommission, 0) - ISNULL(osi.InstantCostPrice * osi.Quantity, 0)) AS INT) AS TotalProfit
+					,CAST(SUM(ISNULL(osi.AmountBeforeGST, 0) - ISNULL(osi.InteriorCommission, 0) - ISNULL(osi.SalesmanCommission, 0) - ISNULL(osi.InstantCostPrice * osi.Quantity, 0)) AS INT) AS TotalProfit
 					,o.Status AS OrderStatus
 					,FORMAT(o.ApprovedDate, 'dd/MM/yyyy') AS ApprovedDate
 					,FORMAT(o.DeliveryDate, 'dd/MM/yyyy') AS DeliveryDate
