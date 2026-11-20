@@ -1,4 +1,4 @@
-
+﻿
 
 -- =============================================  
 -- Author  : MagnusMinds  
@@ -19,6 +19,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	BEGIN
 		IF NOT EXISTS (
 				SELECT 1
@@ -151,6 +153,19 @@ BEGIN
 		LEFT JOIN ProductOffers ofr ON p.ProductId = ofr.ProductId
 		LEFT JOIN Offers o ON o.OfferId = ofr.OfferId
 	END
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

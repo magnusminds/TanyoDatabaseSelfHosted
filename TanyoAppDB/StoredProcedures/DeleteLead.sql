@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC DeleteLead @LeadId = 1, @TenantId = 0
 */
 CREATE PROC DeleteLead
@@ -12,6 +12,8 @@ BEGIN
 	
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @SubjectTypeId BIGINT
 
 	SELECT @SubjectTypeId = SubjectTypeId
@@ -27,6 +29,19 @@ BEGIN
 	DELETE FROM [dbo].[FollowUpLeads] WHERE LeadId = @LeadId
 	DELETE FROM [dbo].[Leads] WHERE LeadId = @LeadId
 
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

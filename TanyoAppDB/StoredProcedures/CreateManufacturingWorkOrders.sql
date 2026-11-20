@@ -1,4 +1,4 @@
-/*
+﻿/*
 EXEC CreateManufacturingWorkOrders
     @OrderId = 42671
     ,@TenantId = 2
@@ -117,9 +117,17 @@ BEGIN
 
     END TRY
 
-    BEGIN CATCH
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
         THROW;
-    END CATCH
+	END CATCH
 END
 
 GO

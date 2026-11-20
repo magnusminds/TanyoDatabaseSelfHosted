@@ -1,4 +1,4 @@
-/*
+﻿/*
  EXEC DeleteTenant UserData
   @TenantId = 00000000000000000000000
   ,@Type = 1
@@ -11,6 +11,8 @@ CREATE PROC [dbo].[DeleteTenant]
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	-- OTP / Auth Cleanup
 	DELETE FROM UserLoginHistory WHERE UserID IN (SELECT UserID FROM AspNetUsers WHERE UserId IN (SELECT UserId FROM UserTenantMapping WHERE TenantId = @TenantId))
 	DELETE FROM OTPLogin WHERE PhoneNumber IN (SELECT PhoneNumber FROM Customers WHERE TenantId = @TenantId UNION ALL SELECT PhoneNumber FROM AspNetUsers INNER JOIN UserTenantMapping ON AspNetUsers.UserId = UserTenantMapping.UserId WHERE UserTenantMapping.TenantId = @TenantId)
@@ -381,6 +383,19 @@ BEGIN
 	-- BackOfficeNotifications
 	DELETE FROM BackOfficeNotificationReads WHERE NotificationId IN (SELECT NotificationId FROM Notifications WHERE TenantId = @TenantId)
 	DELETE FROM BackOfficeNotifications WHERE NotificationId IN (SELECT NotificationId FROM Notifications WHERE TenantId = @TenantId)
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

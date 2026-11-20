@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC ReportOrderSalesSummary
 		@UserId = 4279
 		,@TenantId = 2
@@ -25,6 +25,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	;WITH FilteredOrders
 	AS (
 		SELECT O.OrderId
@@ -97,6 +99,19 @@ BEGIN
 			SELECT COUNT(1)
 			FROM FilteredOrders
 			) AS TotalCount
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

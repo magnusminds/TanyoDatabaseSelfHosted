@@ -1,4 +1,4 @@
-------------------------[dbo].[SaveOrder]
+﻿------------------------[dbo].[SaveOrder]
 
 CREATE PROCEDURE [dbo].[SaveOrder]
 (
@@ -1711,13 +1711,18 @@ BEGIN
 			DROP TABLE #tmpOrderSetItemsAddOns
  
 	END TRY
-	BEGIN CATCH
+BEGIN CATCH
 		IF @@TRANCOUNT > 0
-			ROLLBACK TRAN
- 
-		DECLARE @ErrorMsg VARCHAR(MAX)
-		SET @ErrorMsg = ERROR_MESSAGE()
-		RAISERROR ('Error in SaveOrder : %s', 15, 1, @ErrorMsg)
+			ROLLBACK TRAN;
+
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

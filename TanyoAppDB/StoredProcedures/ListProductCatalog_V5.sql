@@ -1,4 +1,4 @@
--- =============================================  
+﻿-- =============================================  
 -- Author  : MagnusMinds  
 -- Create date : 10-07-2025  
 -- Description : ListProductBytenant  
@@ -17,6 +17,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	BEGIN
 		IF NOT EXISTS (
 				SELECT 1
@@ -177,6 +179,19 @@ BEGIN
 		--	WHERE x.RowID = 1
 		--	) tpi ON tpi.ProductId = p.ProductId
 	END
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

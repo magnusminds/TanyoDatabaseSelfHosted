@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author		: MagnusMinds - JenilV
 -- Ref			: TAN-963, TAN-1008, TAN-1009
 -- Create date	: 2023-Sep-12
@@ -60,7 +60,16 @@ BEGIN
 			,@Error AS [Error]
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+
 		SET @Status = 0;
 
 		IF @Message IS NULL
@@ -70,7 +79,7 @@ BEGIN
 
 		IF @Error IS NULL
 		BEGIN
-			SELECT @Error = ERROR_MESSAGE();
+			SELECT @Error = @ErrorMsg;
 		END
 
 		SELECT @Status AS [Status]

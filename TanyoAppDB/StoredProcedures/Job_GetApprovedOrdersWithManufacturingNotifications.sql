@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[Job_GetApprovedOrdersWithManufacturingNotifications]
 */
 CREATE PROCEDURE [dbo].[Job_GetApprovedOrdersWithManufacturingNotifications]
@@ -7,6 +7,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @CurrentDate DATETIMEOFFSET
 		,@FutureDate DATETIMEOFFSET;
 
@@ -53,6 +55,19 @@ BEGIN
 		AND ISNULL(aut.RegisteredFCMToken, '') <> ''
 	ORDER BY o.TentativeDeliveryDate
 		,cust.FirstName + ' ' + cust.LastName;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

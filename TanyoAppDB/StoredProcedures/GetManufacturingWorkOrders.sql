@@ -1,4 +1,4 @@
-/*
+﻿/*
 EXEC GetManufacturingWorkOrders
     @TenantId = 2
     ,@UserId = 4279 
@@ -29,6 +29,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     DECLARE @Offset INT = (@PageIndex - 1) * @PageSize;
 
     SELECT 
@@ -99,6 +101,19 @@ BEGIN
 
     OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

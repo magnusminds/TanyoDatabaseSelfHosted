@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[ReleaseStockOnHoldByOrderSetItemId]
+﻿CREATE PROCEDURE [dbo].[ReleaseStockOnHoldByOrderSetItemId]
 (
 	@OrderSetItemId BIGINT
 	,@OrderId BIGINT
@@ -9,6 +9,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 		
+
+	BEGIN TRY
 	DECLARE @NowUTC DATETIME = GETUTCDATE();
 	DECLARE @NowUTCOffset DATETIMEOFFSET = SYSDATETIMEOFFSET();
 	DECLARE @TenantId INT
@@ -134,6 +136,19 @@ BEGIN
 			,@NowUTC
 		FROM #SalesManUserId
 	END
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

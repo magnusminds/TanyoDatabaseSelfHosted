@@ -1,4 +1,4 @@
-/*
+﻿/*
 EXEC dbo.GetArchiveOrdersByOrderId 
 	 @OrderId = 98
         ,@TenantId = 125
@@ -19,6 +19,8 @@ CREATE   PROCEDURE [dbo].[GetArchiveOrdersByOrderId]
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	DECLARE @Archive_OrderId BIGINT
 	DECLARE @UpdatedDate DATE;
 
@@ -131,6 +133,19 @@ BEGIN
 			,CASE WHEN @SortBy = 'VersionId' AND @SortOrder = 'DESC' THEN ao.VersionId END DESC
     OFFSET(@PageIndex - 1) * @PageSize ROWS
 	FETCH NEXT @PageSize ROWS ONLY;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

@@ -1,4 +1,4 @@
-/* 
+﻿/* 
 
 EXEC ListPOProductByVendor
 @TenantId = 131
@@ -15,6 +15,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DROP TABLE IF EXISTS #LookupValue
 
 	DECLARE @VendorTenantId INT
@@ -167,6 +169,19 @@ BEGIN
 			OR p.ProductTitle LIKE '%' + @Search + '%'
 			)
 	ORDER BY 2
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

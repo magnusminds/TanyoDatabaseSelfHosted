@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[GetReadyToManufacturerCountForMfgDashboard] @TenantId = 2
 */
 CREATE PROCEDURE [dbo].[GetReadyToManufacturerCountForMfgDashboard] 
@@ -8,6 +8,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @ProductSubjectTypeId INT;
 
 	SELECT @ProductSubjectTypeId = SubjectTypeId
@@ -31,6 +33,19 @@ BEGIN
 	WHERE osi.IsDeleted = 0
 		AND osi.SubjectTypeId = @ProductSubjectTypeId
 		AND osi.ItemStatus = 0;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- SP Name   : OwnerDashboardProfitTrend
 -- Module    : Owner Dashboard - Profit trend daily bar chart (poster style)
 -- Params    : @TenantId INT, @Month INT, @Year INT
@@ -17,6 +17,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     DECLARE @MonthStart  DATE = DATEFROMPARTS(@Year, @Month, 1);
     DECLARE @DaysInMonth INT  = DAY(EOMONTH(@MonthStart));
 
@@ -57,6 +59,19 @@ BEGIN
     LEFT JOIN DailySales ds ON ds.ApprovedDay = c.[Day]
     LEFT JOIN DailyCogs dc ON dc.ApprovedDay = c.[Day]
     ORDER BY c.[Day];
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

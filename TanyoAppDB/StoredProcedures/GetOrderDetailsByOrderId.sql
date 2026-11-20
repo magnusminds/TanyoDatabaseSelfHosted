@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [GetOrderDetailsByOrderId]
 		@TenantId = 9
 		,@OrderID = 176725
@@ -13,6 +13,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT ORD.OrderId
 		,ORD.STATUS
 		,ISNULL((
@@ -127,6 +129,19 @@ BEGIN
 		AND ORD.OrderId = @OrderID
 		AND ORD.STATUS <> 9
 		AND ORD.IsArchive = 0;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

@@ -1,4 +1,4 @@
-/*  
+﻿/*  
 	EXEC [dbo].[ListProductCatalog_V6]  
 	   @TenantId = 2
 	  ,@RoleId = '555D131D-3306-40AC-9A7B-6CBDA78A1C2F'
@@ -12,6 +12,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	BEGIN
 		IF NOT EXISTS (
 				SELECT 1
@@ -148,6 +150,19 @@ BEGIN
 		LEFT JOIN dbo.LookupValues prodColor WITH (NOLOCK) ON p.ProductColourId = prodColor.LookupValueId
 		LEFT JOIN dbo.LookupValues prodMaterial WITH (NOLOCK) ON p.ProductMaterialId = prodMaterial.LookupValueId
 	END
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

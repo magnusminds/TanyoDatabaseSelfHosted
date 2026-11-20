@@ -1,4 +1,4 @@
-/*
+﻿/*
 EXEC [AutoCreatePurchaseOrder]
 	@POProductId = 20320
 	,@TenantId = 125
@@ -340,9 +340,18 @@ BEGIN
 		SET @ReturnPOProductId = @POProductId;
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+
 		SET @Status = 0;
-		SET @Message = ERROR_MESSAGE();
+		SET @Message = @ErrorMsg;
 		SET @OrderID = @ReturnOrderID;
 		SET @ReturnPOProductId = @POProductId;
 	END CATCH

@@ -1,9 +1,11 @@
-CREATE   PROCEDURE [dbo].[GetUserDetailsByTenantAndRole]
+﻿CREATE   PROCEDURE [dbo].[GetUserDetailsByTenantAndRole]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT DISTINCT U.UserId
 		,REPLACE(R.Name, '_' + CAST(T.TenantId AS VARCHAR(20)), '') AS UserRole
 		,R.Id AS RoleId
@@ -25,6 +27,19 @@ BEGIN
 		AND R.IsDeleted = 0
 		AND R.TenantId != 116 -- Exclude Tenant for notification
 	WHERE U.IsActive = 1;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

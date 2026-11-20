@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[ReportAttendanceDetailByUserID] 
 		@UserID  = 4528
 		,@StartDate = '2025-10-01'
@@ -18,6 +18,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	IF OBJECT_ID('tempdb..#Tmp_Attendance') IS NOT NULL
 		DROP TABLE #Tmp_Attendance;
 
@@ -187,6 +189,19 @@ BEGIN
 
 	IF OBJECT_ID('tempdb..#Tmp_Attendance') IS NOT NULL
 		DROP TABLE #Tmp_Attendance;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

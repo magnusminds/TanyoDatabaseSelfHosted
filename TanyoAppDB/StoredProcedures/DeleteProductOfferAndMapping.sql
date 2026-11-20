@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[DeleteProductOfferAndMapping] @TenantId = NULL, @ProductIds = ''
 */
 CREATE     PROCEDURE [dbo].[DeleteProductOfferAndMapping] (
@@ -40,20 +40,18 @@ BEGIN
 		
 	END TRY
 
-	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000)
-		DECLARE @ErrorSeverity INT
-		DECLARE @ErrorState INT
+BEGIN CATCH
+		IF @@TRANCOUNT > 0
+			ROLLBACK TRANSACTION DeleteProductMapping;
 
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY()
-			,@ErrorState = ERROR_STATE()
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

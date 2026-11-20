@@ -1,4 +1,4 @@
-/*    
+﻿/*    
 	EXEC [dbo].[DeleteOrderSetItems_V2]
 		@OrderSetItemId = 757
 		,@DeletedBy = 4279
@@ -250,17 +250,23 @@ BEGIN
 			,@UserId = @DeletedBy
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
 		IF XACT_State() > 0
-			ROLLBACK TRANSACTION
+			ROLLBACK TRANSACTION;
+
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 
 		IF @ResultMessage IS NULL
 			OR @ResultMessage = ''
 		BEGIN
-			DECLARE @ErrorMessage VARCHAR(MAX);
-
-			SET @ErrorMessage = ERROR_MESSAGE();
-			SET @ResultMessage = 'Error in DeleteOrderSetItems_V2: ' + @ErrorMessage;
+			SET @ResultMessage = 'Error in DeleteOrderSetItems_V2: ' + @ErrorMsg;
 		END
 	END CATCH
 END

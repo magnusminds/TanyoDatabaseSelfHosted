@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author       : MagnusMinds
 -- Create date  : 03-07-2026
 -- Description  : Report - Sales Return
@@ -314,32 +314,23 @@ BEGIN
         DROP TABLE #PagedData;
         DROP TABLE #SalesReturnData;
     END TRY
-    BEGIN CATCH
+BEGIN CATCH
 
         IF OBJECT_ID('tempdb..#PagedData') IS NOT NULL
             DROP TABLE #PagedData;
 
         IF OBJECT_ID('tempdb..#SalesReturnData') IS NOT NULL
             DROP TABLE #SalesReturnData;
+            
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-        DECLARE
-             @ErrorMessage NVARCHAR(MAX)
-            ,@ErrorSeverity INT
-            ,@ErrorState INT;
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-        SELECT
-             @ErrorMessage = ERROR_MESSAGE()
-            ,@ErrorSeverity = ERROR_SEVERITY()
-            ,@ErrorState = ERROR_STATE();
-
-        RAISERROR
-        (
-             @ErrorMessage
-            ,@ErrorSeverity
-            ,@ErrorState
-        );
-
-    END CATCH
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

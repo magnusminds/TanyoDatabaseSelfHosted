@@ -1,4 +1,4 @@
-/*
+﻿/*
     EXEC GetLeadAllFollowUps
         @TenantId = 2
         ,@FromDate = NULL
@@ -17,6 +17,8 @@ CREATE   PROCEDURE [dbo].[GetLeadAllFollowUps]
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
     SELECT @ToDate = DATEADD(DAY, 1, @ToDate)
 
     ;WITH RankedFollowUps AS (
@@ -76,6 +78,19 @@ BEGIN
         ,FollowUpDetail10
     FROM PivotDates
     ORDER BY 1 DESC
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

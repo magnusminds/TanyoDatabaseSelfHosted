@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[GetAllPOPaymentDetails] (
+﻿CREATE   PROCEDURE [dbo].[GetAllPOPaymentDetails] (
 	@POProductId BIGINT
 	,@PageIndex INT = 1
 	,@PageSize INT = 10
@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT PPP.POProductPaymentId
 		,PPP.POProductId
 		,PPP.VendorId
@@ -57,6 +59,19 @@ BEGIN
 			END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
 
 	FETCH NEXT @PageSize ROWS ONLY
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

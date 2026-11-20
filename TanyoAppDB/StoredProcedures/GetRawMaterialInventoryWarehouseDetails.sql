@@ -1,4 +1,4 @@
-/*
+﻿/*
     EXEC [dbo].[GetRawMaterialInventoryWarehouseDetails] 
 	    @RawMaterialId = 715
 	    ,@WarehouseId = NULL
@@ -11,6 +11,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     DECLARE @TotalQuantity Numeric(18,2) = 0
             ,@ReadyToDeliver Numeric(18,2) = 0
             ,@WarehouseTotal Numeric(18,2) = 0
@@ -65,6 +67,19 @@ BEGIN
         ,r.ID
 
     DROP TABLE #Result
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

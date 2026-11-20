@@ -1,4 +1,4 @@
-/*
+﻿/*
     EXEC dbo.Report_ListShareProduct_V3
         @TenantId   = 2,
         @SharedBy   = NULL,
@@ -155,16 +155,15 @@ BEGIN
 		FETCH NEXT @PageSize ROWS ONLY;
 	END TRY
 
-	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE()
-		DECLARE @ErrorSeverity INT = ERROR_SEVERITY()
-		DECLARE @ErrorState INT = ERROR_STATE()
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

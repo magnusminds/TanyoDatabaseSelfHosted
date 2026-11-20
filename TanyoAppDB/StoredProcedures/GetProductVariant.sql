@@ -1,4 +1,4 @@
-/*
+﻿/*
 EXEC [dbo].[GetProductVariant]
 	@ProductId = 161
 	,@ProductVariantId = NULL
@@ -21,6 +21,8 @@ WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
+
+	BEGIN TRY
 		DECLARE @Tmp_ProductVariant AS TABLE
 		(
 			Id INT IDENTITY(1,1)
@@ -62,6 +64,19 @@ BEGIN
 			,CASE WHEN @SortBy = 'CreatedDate' AND @SortOrder = 'DESC' THEN pv.CreatedDate END DESC
 	OFFSET (@PageIndex - 1) * @PageSize ROWS
     FETCH NEXT @PageSize ROWS ONLY;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

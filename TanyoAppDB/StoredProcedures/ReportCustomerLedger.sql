@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[ReportCustomerLedger]  
+﻿CREATE   PROCEDURE [dbo].[ReportCustomerLedger]  
      @TenantId INT = NULL  
     ,@CustomerId BIGINT = NULL  
     ,@FromDate DATE = NULL  
@@ -8,6 +8,8 @@ AS
 BEGIN  
     SET NOCOUNT ON;  
   
+
+	BEGIN TRY
     DECLARE  
          @CustomerName NVARCHAR(200)  
         ,@TotalDebitAmount DECIMAL(18,2)  
@@ -175,4 +177,17 @@ BEGIN
     DROP TABLE IF EXISTS #Orders;  
     DROP TABLE IF EXISTS #Payments;  
     DROP TABLE IF EXISTS #SalesReturns;  
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;

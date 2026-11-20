@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[GetProductStockDetails]
 		@TenantId = 1
 		,@ProductId = 199 
@@ -16,6 +16,8 @@ BEGIN
 	
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @dt DATETIMEOFFSET
 	DECLARE @ProductSubjectTypeId INT
 
@@ -85,6 +87,19 @@ BEGIN
 	FROM Products p WITH (NOLOCK)
 	WHERE p.TenantId = @TenantId
 	AND p.ProductId = @ProductId
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

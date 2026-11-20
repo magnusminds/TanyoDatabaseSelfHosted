@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- SP Name   : OwnerDashboardProfit
 -- Module    : Owner Dashboard - Profit ("Are We Making Money?")
 -- Params    : @TenantId INT, @Month INT, @Year INT
@@ -26,6 +26,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     DECLARE @MonthStart DATE = DATEFROMPARTS(@Year, @Month, 1);
     DECLARE @MonthEnd   DATE = EOMONTH(@MonthStart);
 
@@ -58,6 +60,19 @@ BEGIN
              ELSE 0 END                                                             AS GrossMarginPct
     FROM PeriodOrders po
     LEFT JOIN CogsPerOrder c ON c.OrderId = po.OrderId;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

@@ -1,4 +1,4 @@
-/*      
+﻿/*      
  EXEC [dbo].[DeleteOrderSoft] @OrderId = 84,@TenantId = 2,@DeletedBy = 1    
 */
 CREATE PROCEDURE [dbo].[DeleteOrderSoft] (
@@ -364,21 +364,26 @@ BEGIN
 			,@Error AS [Error]
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
 		IF @@TRANCOUNT > 0
 		BEGIN
 			ROLLBACK TRAN delOrderDependentData
 		END
+
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 
 		SET @Status = 0;
 
 		SELECT @Message = 'Order dependent data not deleted';
 
 		SET @Error = NULL;
-
-		DECLARE @ErrorMsg VARCHAR(MAX)
-
-		SET @ErrorMsg = ERROR_MESSAGE()
 
 		SELECT @Status AS [Status]
 			,@Message AS [Message]

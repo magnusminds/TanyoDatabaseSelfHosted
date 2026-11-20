@@ -1,4 +1,4 @@
-
+﻿
 -- =============================================
 -- Author:  MagnusMinds
 -- Create date: 22-Jul-2025
@@ -26,6 +26,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     DECLARE @IsAdmin BIT = 0,
             @HasSuperAccess BIT = 0;
 
@@ -62,6 +64,19 @@ BEGIN
           );
 
     DROP TABLE #UserLocations;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

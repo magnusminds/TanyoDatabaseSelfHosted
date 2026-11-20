@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 EXEC GetOrderManufacturingNotificationData
     @OrderId = 10776
@@ -12,6 +12,8 @@ CREATE   PROCEDURE [dbo].[GetOrderManufacturingNotificationData] (
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SET NOCOUNT ON;;
 
 	WITH WorkflowCTE
@@ -73,6 +75,19 @@ BEGIN
 	WHERE rn = 1
 	AND RegisteredFCMToken IS NOT NULL
 	ORDER BY Position ASC;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

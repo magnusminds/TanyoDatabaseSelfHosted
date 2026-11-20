@@ -1,4 +1,4 @@
-/*  
+﻿/*  
 	EXEC [dbo].[ReleaseStockOnHold]
 */
 CREATE PROCEDURE [dbo].[ReleaseStockOnHold] 
@@ -6,6 +6,8 @@ WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON
+
+	BEGIN TRY
 	DECLARE @NowUTC DATETIME = GETUTCDATE();
 	DECLARE @NowUTCOffset DATETIMEOFFSET = SYSDATETIMEOFFSET();
 	DECLARE @UserId BIGINT = 0
@@ -68,6 +70,19 @@ BEGIN
 		SET @Inc = @Inc + 1
 	END
 
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[DeleteMultiplePOProducts]
+﻿CREATE   PROCEDURE [dbo].[DeleteMultiplePOProducts]
 (
     @POProductIds NVARCHAR(MAX),
     @UserID INT
@@ -79,12 +79,19 @@ BEGIN
                'Selected PO records deleted successfully.' AS [Message];
 
     END TRY
-    BEGIN CATCH
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-        SELECT 0 AS [Status],
-               ERROR_MESSAGE() AS [Message];
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-    END CATCH
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+
+		SELECT 0 AS [Status],
+               @ErrorMsg AS [Message];
+	END CATCH
 END
 
 GO

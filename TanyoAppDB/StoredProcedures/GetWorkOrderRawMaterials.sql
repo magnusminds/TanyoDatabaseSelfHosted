@@ -1,4 +1,4 @@
-/*
+﻿/*
 EXEC GetWorkOrderRawMaterials
     @TenantId = 2
     ,@UserId = 4279
@@ -15,6 +15,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     SELECT
         MWOD.ManufacturingWorkOrderDetailId,
         MWOD.RawMaterialId,
@@ -59,6 +61,19 @@ BEGIN
         ISNULL(MWOD.IsFromBom, 1) DESC,
         CAST(ISNULL(RMI.Inventory, 0) AS DECIMAL(18, 2)) ASC,
         RM.Title ASC;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

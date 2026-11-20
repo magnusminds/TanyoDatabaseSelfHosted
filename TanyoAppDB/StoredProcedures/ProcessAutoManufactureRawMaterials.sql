@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[ProcessAutoManufactureRawMaterials] (
+﻿CREATE PROCEDURE [dbo].[ProcessAutoManufactureRawMaterials] (
 	@OrderId BIGINT
 	,@TenantId INT
 	,@UserId INT
@@ -10,6 +10,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @rawMaterialSubjectTypeId INT
 		,@RawMaterialInventoryId INT
 		,@QuantityNeeded NUMERIC(18, 2)
@@ -115,6 +117,19 @@ BEGIN
 
 		SET @RawIndex = @RawIndex + 1
 	END
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

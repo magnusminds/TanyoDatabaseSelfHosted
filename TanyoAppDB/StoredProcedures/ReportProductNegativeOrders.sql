@@ -1,4 +1,4 @@
-/*
+﻿/*
     EXEC [dbo].[ReportProductNegativeOrders]
         @TenantId = 2
         ,@CategoryId = NULL
@@ -150,18 +150,15 @@ BEGIN
 		FETCH NEXT @PageSize ROWS ONLY;
 	END TRY
 
-	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000)
-			,@ErrorSeverity INT;
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY();
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,1
-				);
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

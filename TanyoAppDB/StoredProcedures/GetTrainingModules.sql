@@ -1,4 +1,4 @@
-/*
+﻿/*
 exec GetTrainingModules
 */
 CREATE   PROCEDURE dbo.GetTrainingModules
@@ -7,6 +7,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     SELECT
         TM.TrainingModuleId,
         TM.TrainingModuleName,
@@ -26,6 +28,19 @@ BEGIN
     FROM TrainingModule TM WITH (NOLOCK)
     WHERE TM.IsDeleted = 0
     ORDER BY TM.ModuleDisplayOrder
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

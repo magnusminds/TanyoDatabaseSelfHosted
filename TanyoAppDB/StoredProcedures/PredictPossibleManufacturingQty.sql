@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[PredictPossibleManufacturingQty]
 		@ProductId = 2439,
 		@TenantId = 2,
@@ -14,6 +14,8 @@ CREATE PROCEDURE [dbo].[PredictPossibleManufacturingQty] (
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	DECLARE @SubjectTypeId INT = NULL
 		,@MinimumQuantity INT = NULL
 
@@ -42,6 +44,19 @@ BEGIN
 	ORDER BY rm.Title OFFSET((@PageIndex - 1) * @PageSize) ROWS
 
 	FETCH NEXT @PageSize ROWS ONLY;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

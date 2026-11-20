@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- SP Name   : OwnerDashboardStock
 -- Module    : Owner Dashboard - Stock ("What Is My Stock Status?")
 -- Params    : @TenantId INT, @Month INT, @Year INT, optional threshold overrides
@@ -24,6 +24,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @Today DATE = CAST(GETDATE() AS DATE);
 	DECLARE @MonthStart DATE = DATEFROMPARTS(@Year, @Month, 1);
 	DECLARE @MonthEnd DATE = EOMONTH(@MonthStart);;
@@ -123,6 +125,19 @@ BEGIN
 				SELECT ISNULL(SUM(StockValue), 0)
 				FROM StockPerProduct
 				), 0) AS StockTurnover;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

@@ -1,7 +1,9 @@
-CREATE PROCEDURE GetOrderShippingAddressDetails (@OrderId BIGINT)
+﻿CREATE PROCEDURE GetOrderShippingAddressDetails (@OrderId BIGINT)
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SELECT OA.OrderAddressId
 	    ,OA.OrderId
 		,OA.CustomerAddressId
@@ -17,6 +19,19 @@ BEGIN
 	FROM OrderAddresses OA WITH (NOLOCK)
 	WHERE OA.OrderId = @OrderId
 		AND OA.AddressType = 'Shipping'
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

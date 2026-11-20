@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[ReportPaymentCollection]  
+﻿CREATE   PROCEDURE [dbo].[ReportPaymentCollection]  
 (  
  @TenantId INT  
 ,@FromDate DATE  
@@ -156,21 +156,16 @@ BEGIN TRY
 
 END TRY  
 
-BEGIN CATCH  
-  DECLARE @ErrorMessage NVARCHAR(4000)  
-  DECLARE @ErrorSeverity INT  
-  DECLARE @ErrorState INT  
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-  SELECT @ErrorMessage = ERROR_MESSAGE()  
-   ,@ErrorSeverity = ERROR_SEVERITY()  
-   ,@ErrorState = ERROR_STATE()  
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-  RAISERROR (  
-    @ErrorMessage  
-    ,@ErrorSeverity  
-    ,@ErrorState  
-    )  
-END CATCH  
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH  
 END
 
 GO

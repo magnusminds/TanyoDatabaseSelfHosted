@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[GetSplitOrderView] (
+﻿CREATE PROCEDURE [dbo].[GetSplitOrderView] (
 	@TenantID BIGINT
 	,@CustomerId BIGINT = NULL
 	,@FromDate DATE = NULL
@@ -13,6 +13,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT o.OrderId
 		,o.OrderNo
 		,au.FirstName + ' ' + au.LastName AS SalesmanName
@@ -89,6 +91,19 @@ BEGIN
 				THEN ROUND(ISNULL(o.TotalAmt, 0), 0)
 			END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
 		FETCH NEXT @PageSize ROWS ONLY
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[CreateComplain] (
+﻿CREATE   PROCEDURE [dbo].[CreateComplain] (
 	@ComplainRequestDetails VARCHAR(MAX)
 	,@TenantId BIGINT
 	,@UserId BIGINT
@@ -335,11 +335,19 @@ BEGIN
 		WHERE C.ComplainId = @ComplainId;
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
 		IF @@TRANCOUNT > 0
 			ROLLBACK TRANSACTION;
 
-		THROW;
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+		THROW;	
 	END CATCH
 END
 

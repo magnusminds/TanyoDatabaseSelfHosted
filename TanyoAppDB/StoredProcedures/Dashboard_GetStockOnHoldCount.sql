@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:  MagnusMinds
 -- Create date: 22-Jul-2025
 -- Description: Get count of Orders which are in StockOnHold status
@@ -15,6 +15,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     DECLARE @dt DATE = CAST(GETDATE() AS DATE)
 
     SELECT COUNT(DISTINCT soh.OrderSetItemId) AS StatusCount
@@ -26,6 +28,19 @@ BEGIN
       AND o.Status in (0,1) -- Inquiry
       AND o.IsArchive = 0
       AND DATEADD(DAY, TRY_CAST(soh.TimePeriod AS INT), soh.CreatedDate) > @dt
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[ReportMonthlyUsageByTenantID]
 		@TenantID = 2
 */
@@ -12,6 +12,8 @@ BEGIN
 
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT MONTH(o.CreatedDate) AS MonthNo
 		,YEAR(o.CreatedDate) AS YearNo
 		,DATENAME(MONTH, DATEADD(MONTH, CAST(MONTH(o.CreatedDate) AS INT), -1 )) + '-' + CAST(YEAR(o.CreatedDate) AS VARCHAR(4)) AS MonthYear
@@ -24,6 +26,19 @@ BEGIN
 	WHERE o.TenantId = @TenantID
 	GROUP BY MONTH(o.CreatedDate), YEAR(o.CreatedDate), DATENAME(MONTH, DATEADD(MONTH, CAST(MONTH(o.CreatedDate) AS INT), -1 )) + '-' + CAST(YEAR(o.CreatedDate) AS VARCHAR(4))
 	ORDER BY 2 DESC, 1 DESC
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

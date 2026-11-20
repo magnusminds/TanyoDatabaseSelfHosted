@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author		: MagnusMinds
 -- Create date	: 06-09-2023
 -- Description	: Report - Notifications Management
@@ -195,21 +195,15 @@ BEGIN
 		FETCH NEXT @PageSize ROWS ONLY;
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		DECLARE @ErrorMessage NVARCHAR(4000)
-		DECLARE @ErrorSeverity INT
-		DECLARE @ErrorState INT
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY()
-			,@ErrorState = ERROR_STATE()
-
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

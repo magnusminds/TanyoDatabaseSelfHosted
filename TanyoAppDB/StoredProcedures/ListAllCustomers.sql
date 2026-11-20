@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC dbo.ListAllCustomers
 		@TenantId = 1
 		,@Search = ''
@@ -16,6 +16,8 @@ BEGIN
 
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT c.CustomerId
 		,c.CustomerTypeId
 		,c.FirstName + ' ' + ISNULL(c.LastName, '') AS CustomerName
@@ -43,6 +45,19 @@ BEGIN
 	AND @Search IS NOT NULL AND (l.LabelName LIKE '%' + @Search + '%')
 	GROUP BY l.LabelId, l.LabelName
 	ORDER BY 3
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

@@ -1,4 +1,4 @@
-/*  
+﻿/*  
 EXEC GetProductsByCatalogueId  
     @CatalogueId = 26,  
     @TenantId = 2,  
@@ -14,6 +14,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT p.ProductId
 		,p.ProductTitle
 		,p.ModelNo AS ProductModelNo
@@ -80,6 +82,19 @@ BEGIN
 		AND cd.IsDeleted = 0
 	ORDER BY c.CategoryName
 		,p.ProductTitle;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

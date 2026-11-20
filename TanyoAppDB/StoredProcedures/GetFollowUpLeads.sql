@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC [dbo].[GetFollowUpLeads]
 */
 CREATE   PROC [dbo].[GetFollowUpLeads]
@@ -7,6 +7,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @FollowUpDate DATETIME = DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()), 0)
 
 	IF OBJECT_ID('tempdb..#InquirySubjectTypeByTenant') IS NOT NULL
@@ -67,6 +69,19 @@ BEGIN
 		AND ISNULL(anu.RegisteredFCMToken, '') <> ''
 		AND ful.FollowUpDate IS NOT NULL
 		AND ISNULL(ful.FollowUpComment, '') <> ''
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

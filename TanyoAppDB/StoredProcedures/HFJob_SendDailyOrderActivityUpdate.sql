@@ -1,9 +1,11 @@
-
+﻿
 CREATE PROCEDURE [dbo].[HFJob_SendDailyOrderActivityUpdate]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
+
+	BEGIN TRY
 	DECLARE @Yesterday DATE = DATEADD(DAY, - 1, CAST(GETDATE() AS DATE));
 	
 	-- Create temp table for Payment Summary
@@ -164,6 +166,19 @@ BEGIN
 		
 	IF OBJECT_ID('tempdb..#OwnerEmailIds') IS NOT NULL
 		DROP TABLE #OwnerEmailIds;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[CreateLead]
+﻿CREATE   PROCEDURE [dbo].[CreateLead]
 (	
 	@CustomerId BIGINT
 	,@Status INT
@@ -215,10 +215,18 @@ BEGIN
 		WHERE l.LeadId = @NewLeadId;
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
 		IF @@TRANCOUNT > 0
 			ROLLBACK TRANSACTION;
 
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 		THROW;
 	END CATCH
 END;

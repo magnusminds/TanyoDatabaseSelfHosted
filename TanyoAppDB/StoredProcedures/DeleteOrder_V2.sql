@@ -1,4 +1,4 @@
-
+﻿
 /*  
     EXEC [dbo].[DeleteOrder]  
         @OrderId = '84',  
@@ -196,19 +196,22 @@ BEGIN
   COMMIT TRANSACTION DeleteOrderV2;  
  END TRY  
   
- BEGIN CATCH  
-  IF XACT_State() > 0  
-   ROLLBACK TRANSACTION  
-  
-  IF @ResultMessage IS NULL  
-   OR @ResultMessage = ''  
-  BEGIN  
-   DECLARE @ErrorMessage VARCHAR(MAX);  
-  
-   SET @ErrorMessage = ERROR_MESSAGE();  
-   SET @ResultMessage = 'Error in DeleteOrder_V2: ' + @ErrorMessage;  
-  END  
- END CATCH  
+BEGIN CATCH
+		IF XACT_State() > 0
+			ROLLBACK TRANSACTION;
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+
+		IF @ResultMessage IS NULL
+			OR @ResultMessage = ''
+		BEGIN
+			SET @ResultMessage = 'Error in DeleteOrder_V2: ' + @ErrorMsg;
+		END
+	END CATCH  
 END
 
 GO

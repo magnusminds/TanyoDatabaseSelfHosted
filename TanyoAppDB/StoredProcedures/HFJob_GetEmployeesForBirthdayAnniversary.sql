@@ -1,9 +1,11 @@
-CREATE PROCEDURE [dbo].[HFJob_GetEmployeesForBirthdayAnniversary]
+﻿CREATE PROCEDURE [dbo].[HFJob_GetEmployeesForBirthdayAnniversary]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	IF OBJECT_ID('tempdb..#AllTenantEmails') IS NOT NULL
 		DROP TABLE #AllTenantEmails
 
@@ -165,6 +167,19 @@ BEGIN
 	
 	IF OBJECT_ID('tempdb..#OwnerPhoneNumbers') IS NOT NULL
 		DROP TABLE #OwnerPhoneNumbers;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

@@ -1,9 +1,11 @@
-CREATE   PROCEDURE [dbo].[HFJob_GetRawMaterialPriceUpdateToSendEmail]
+﻿CREATE   PROCEDURE [dbo].[HFJob_GetRawMaterialPriceUpdateToSendEmail]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON
 
+
+	BEGIN TRY
 	DECLARE @YesterDayDate DATE = DATEADD(DAY, - 1, GETUTCDATE())
 	DECLARE @YesterdayStartTime DATETIME = CAST(@YesterDayDate AS VARCHAR(10)) + ' 00:00:00.002'
 		,@YesterdayEndTime DATETIME = CAST(@YesterDayDate AS VARCHAR(10)) + ' 23:59:59.997'
@@ -77,6 +79,19 @@ BEGIN
 		,a.TenantName
 	FROM #tmp_UniquePriceChange a
 	INNER JOIN #Tmp_EmailLit b ON b.TenantId = a.TenantId
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

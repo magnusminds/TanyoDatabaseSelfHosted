@@ -1,4 +1,4 @@
-/*
+﻿/*
 EXEC dbo.GetOrderActivityData
 	@TenantId = 2
 	,@OrderId = 1
@@ -20,6 +20,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @OrderSubjectTypeId BIGINT;
 
 	SELECT @OrderSubjectTypeId = SubjectTypeId
@@ -110,6 +112,19 @@ BEGIN
 			END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
 
 	FETCH NEXT @PageSize ROWS ONLY
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

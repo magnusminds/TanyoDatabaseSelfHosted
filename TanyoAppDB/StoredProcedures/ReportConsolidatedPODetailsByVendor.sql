@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[ReportConsolidatedPODetailsByVendor] (
+﻿CREATE PROCEDURE [dbo].[ReportConsolidatedPODetailsByVendor] (
 	@TenantId INT
 	,@VendorId INT = NULL
 	,@FromDate DATE = NULL
@@ -15,6 +15,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DROP TABLE IF EXISTS #LookupValue
 		
 	SELECT LKV.*
@@ -173,6 +175,19 @@ BEGIN
 			END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
 
 	FETCH NEXT @PageSize ROWS ONLY;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

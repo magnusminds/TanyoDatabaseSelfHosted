@@ -1,7 +1,9 @@
-CREATE PROCEDURE [dbo].[DeleteOrderDetailsByTenant] (@TenantId INT)
+﻿CREATE PROCEDURE [dbo].[DeleteOrderDetailsByTenant] (@TenantId INT)
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	DROP TABLE IF EXISTS #Orders
 
 	SELECT OrderId
@@ -103,6 +105,19 @@ BEGIN
 	FROM Orders OD
 	INNER JOIN #Orders ORD ON OD.OrderId = ORD.OrderId
 
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

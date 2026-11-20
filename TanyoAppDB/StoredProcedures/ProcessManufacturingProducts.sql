@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[ProcessManufacturingProducts] (
+﻿CREATE   PROCEDURE [dbo].[ProcessManufacturingProducts] (
 	@OrderId BIGINT
 	,@TenantId INT
 	,@UserId INT
@@ -350,22 +350,17 @@ BEGIN
 
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-		--SET @Status = 0
-
-		--SET @Message = 'Your order could not be Processed.';
-
-
-		--IF @Error IS NULL
-		--BEGIN
-		--	SET @Error = ERROR_MESSAGE();
-		--END
-
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 		THROW;
-		
-	END CATCH;
+	END CATCH
 
 END;
 

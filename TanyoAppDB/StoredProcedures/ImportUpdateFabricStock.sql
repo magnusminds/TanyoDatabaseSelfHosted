@@ -1,4 +1,4 @@
-CREATE   PROCEDURE [dbo].[ImportUpdateFabricStock] (
+﻿CREATE   PROCEDURE [dbo].[ImportUpdateFabricStock] (
 	@WrkProductID BIGINT
 	,@UserId INT
 	,@TotalRecords INT
@@ -326,14 +326,23 @@ BEGIN
 		COMMIT;
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
 		IF @@TRANCOUNT > 0
 			ROLLBACK;
 
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+
 		SELECT NULL AS ProductId
-		,@TenantId AS TenantId
-		,NULL AS TenantLogo
-		,@ErrorMessage AS ErrorMessage
+			,@TenantId AS TenantId
+			,NULL AS TenantLogo
+			,@ErrorMessage AS ErrorMessage
 
 	END CATCH
 END

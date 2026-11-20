@@ -1,4 +1,4 @@
-/*
+﻿/*
     EXEC ProductSetDetailsById
     @ProductSetId = 70045
     ,@TenantId = 2
@@ -13,6 +13,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT ps.ProductSetId
 		,ps.SetName
 		,ps.Description
@@ -47,6 +49,19 @@ BEGIN
 	WHERE ps.ProductSetId = @ProductSetId
 		AND ps.TenantId = @TenantId
 		AND ps.IsDeleted = 0;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

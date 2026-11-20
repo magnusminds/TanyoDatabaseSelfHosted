@@ -1,4 +1,4 @@
-/*
+﻿/*
 exec ApplyOffer
 	@OfferId = 134
 	,@ProductIds = '52277,52278,52283,62297,62326'
@@ -255,13 +255,18 @@ BEGIN
 END TRY
 
 BEGIN CATCH
+		IF @@TRANCOUNT > 0
+			ROLLBACK;
 
-	IF @@TRANCOUNT >0 
-		ROLLBACK;
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-	THROW;
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-END CATCH
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 
 END
 

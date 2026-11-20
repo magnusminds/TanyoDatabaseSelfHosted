@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC dbo.ListProductByVendor
 		@TenantId = 88
 	   ,@VendorId = 38
@@ -20,6 +20,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @DisplayStockToDealer BIT = 0
 
 	SELECT @DisplayStockToDealer = T.DisplayStockToDealer
@@ -100,6 +102,19 @@ BEGIN
 		  AND (@Search IS NULL OR @Search = '' OR p.ModelNo LIKE '%' + @Search + '%' OR p.ProductTitle LIKE '%' + @Search + '%')
 		ORDER BY 1 DESC
 	END
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

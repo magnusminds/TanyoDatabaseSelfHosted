@@ -1,4 +1,4 @@
-CREATE     PROC [dbo].[DeletePORawMaterials]
+﻿CREATE     PROC [dbo].[DeletePORawMaterials]
 (
 	@PORawMaterialId BIGINT
 	,@TenantId BIGINT
@@ -42,15 +42,18 @@ BEGIN
 		COMMIT TRAN
 
 	END TRY
-	BEGIN CATCH
-		IF @@TRANCOUNT > 0 ROLLBACK TRAN
+BEGIN CATCH
+		IF @@TRANCOUNT > 0
+			ROLLBACK TRAN;
 
-		DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE()
-		DECLARE @ErrorLine INT = ERROR_LINE()
-		DECLARE @ErrorSeverity INT = ERROR_SEVERITY()
-		DECLARE @ErrorState INT = ERROR_STATE()
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		RAISERROR('DeletePORawMaterials failed: %s (Line %d)', @ErrorSeverity, @ErrorState, @ErrorMsg, @ErrorLine)
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

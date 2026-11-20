@@ -1,4 +1,4 @@
--- =============================================  
+﻿-- =============================================  
 -- Author		: MagnusMinds  
 -- Create date	: 02-07-2025  
 -- Description	: Update the cover image to the product
@@ -10,6 +10,8 @@ CREATE PROCEDURE [dbo].[PopulateProductCoverImage]
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SET NOCOUNT OFF;
 
 	UPDATE p
@@ -31,6 +33,19 @@ BEGIN
 		WHERE x.RowID = 1
 		) x ON x.ProductId = p.ProductId
 	WHERE ISNULL(p.CoverImage, '') <> ISNULL(x.ImagePath, '')
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

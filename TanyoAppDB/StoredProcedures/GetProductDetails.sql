@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[GetProductDetails] (
+﻿CREATE PROCEDURE [dbo].[GetProductDetails] (
 	@TenantId INT
 	,@PageNumber INT = 1
 	,@PageSize INT = 25
@@ -15,6 +15,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	IF @PageSize > 100
 		SET @PageSize = 100
 
@@ -151,6 +153,19 @@ BEGIN
 			END DESC OFFSET(@PageNumber - 1) * @PageSize ROWS
 
 	FETCH NEXT @PageSize ROWS ONLY
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

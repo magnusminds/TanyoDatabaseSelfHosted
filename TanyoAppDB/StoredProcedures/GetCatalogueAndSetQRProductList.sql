@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC GetCatalogueAndSetQRProductList
 		@ProductTitle = NULL
 		,@TenantId = 2
@@ -23,6 +23,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT PT.ProductId 
 		,PT.ProductTitle 
 		,PT.ModelNo
@@ -98,6 +100,19 @@ BEGIN
             )
         )
 	ORDER BY PT.ProductTitle
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

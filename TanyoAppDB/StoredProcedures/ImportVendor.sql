@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[ImportVendor] (
+﻿CREATE PROCEDURE [dbo].[ImportVendor] (
 	@WrkVendorID BIGINT
 	,@UserId INT
 	,@TotalRecords INT
@@ -285,14 +285,23 @@ BEGIN
 		COMMIT;
 	END TRY
 
-	BEGIN CATCH
+BEGIN CATCH
 		IF @@TRANCOUNT > 0
 			ROLLBACK;
+
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 
 		SELECT NULL AS VendorId
 			,@TenantId AS TenantId
 			,NULL AS TenantLogo
-			,ERROR_MESSAGE() AS ErrorMessage;
+			,@ErrorMsg AS ErrorMessage;
 	END CATCH
 END
 

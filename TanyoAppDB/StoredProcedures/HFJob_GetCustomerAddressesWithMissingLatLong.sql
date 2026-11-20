@@ -1,7 +1,9 @@
-CREATE   PROCEDURE HFJob_GetCustomerAddressesWithMissingLatLong
+﻿CREATE   PROCEDURE HFJob_GetCustomerAddressesWithMissingLatLong
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SELECT CA.CustomerAddressId
 		,CA.City
 		,CA.STATE
@@ -13,6 +15,19 @@ BEGIN
 				CA.Latitude IS NULL
 			OR CA.Longitude IS NULL
 			)
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

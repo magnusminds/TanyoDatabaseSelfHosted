@@ -1,4 +1,4 @@
-
+﻿
 -- =============================================
 -- Author:		<Author,,MAGNUSMINDS>
 -- Create date: <Create Date,2024-11-05,>
@@ -13,6 +13,8 @@ CREATE   PROCEDURE [dbo].[GetRawMaterialThresholdLessThanZero] (@TenantId BIGINT
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SELECT rm.RawMaterialId
 		,rm.Title
 		,rm.ImagePath
@@ -28,6 +30,19 @@ BEGIN
 		AND rmi.Inventory <= rmi.MinimumLimit
 	INNER JOIN AspNetUsers au WITH (NOLOCK) ON rmi.LastModifiedBy = au.UserId
 	ORDER BY rm.Title
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

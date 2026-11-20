@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- SP Name   : OwnerDashboardPipeline
 -- Module    : Owner Dashboard - Pipeline ("Lead to Order Funnel")
 -- Params    : @TenantId INT, @Month INT, @Year INT
@@ -24,6 +24,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
+	BEGIN TRY
     DECLARE @MonthStart DATE = DATEFROMPARTS(@Year, @Month, 1);
     DECLARE @MonthEnd   DATE = EOMONTH(@MonthStart);
 
@@ -72,6 +74,19 @@ BEGIN
         CASE WHEN f.NewLeads > 0 THEN (f.WalkIns * 100.0) / f.NewLeads ELSE 0 END            AS LeadToWalkInPct,
         CASE WHEN f.WalkIns > 0 THEN (f.QuotationsGiven * 100.0) / f.WalkIns ELSE 0 END      AS WalkInToQuotePct
     FROM Funnel f;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

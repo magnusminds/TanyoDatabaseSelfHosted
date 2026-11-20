@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC dbo.ListPORawMaterialByVendor
 		@TenantId = 125
 	   ,@VendorId = 1
@@ -15,6 +15,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT rw.RawMaterialId
 		,rw.Title AS RawMaterialTitle
 		,rw.ImagePath AS RawMaterialImage
@@ -27,6 +29,19 @@ BEGIN
 	AND rw.VendorId = @VendorId
 	AND (@Search IS NULL OR @Search = '' OR rw.Title LIKE '%' + @Search + '%')
 	ORDER BY 2
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

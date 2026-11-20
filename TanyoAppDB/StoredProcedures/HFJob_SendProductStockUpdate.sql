@@ -1,10 +1,12 @@
-/*
+﻿/*
 	EXEC [dbo].[HFJob_SendProductStockUpdate]		
 */
 CREATE   PROCEDURE [dbo].[HFJob_SendProductStockUpdate]
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SELECT PT.ProductTitle AS Title
 		,QT.Quantity
 		,QT.MinimumLimit
@@ -56,6 +58,19 @@ BEGIN
 	WHERE RMI.Inventory < RMI.MinimumLimit
 		AND RM.IsDeleted = 0
 		
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

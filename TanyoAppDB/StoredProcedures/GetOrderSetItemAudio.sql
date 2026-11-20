@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 EXEC GetOrderSetItemAudio
 	@OrderId =1
@@ -7,6 +7,8 @@ CREATE PROCEDURE [dbo].[GetOrderSetItemAudio] (@OrderId BIGINT)
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	IF OBJECT_ID('tempdb..#OrderSetItems') IS NOT NULL
 		DROP TABLE #OrderSetItems
 
@@ -24,6 +26,19 @@ BEGIN
 	FROM OrderSetItemImages OSIMA WITH (NOLOCK)
 	INNER JOIN #OrderSetItems OSI ON OSI.OrderSetItemId = OSIMA.OrderSetItemId
 	WHERE OSIMA.FileType = 'Audio'
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

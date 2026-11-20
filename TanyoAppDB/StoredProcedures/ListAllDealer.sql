@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC dbo.ListAllDealer
 		@TenantId = 127
 		,@Search = 'Tanyo'
@@ -12,6 +12,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT c.CustomerId AS DealerId
 		,4 AS DealerTypeId
 		,c.FirstName + ' ' + ISNULL(c.LastName, '') AS DealerName
@@ -41,6 +43,19 @@ BEGIN
 	GROUP BY l.LabelId
 		,l.LabelName
 	ORDER BY 3
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

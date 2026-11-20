@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- SP Name   : OwnerDashboardCash
 -- Module    : Owner Dashboard - Cash ("Are We Collecting?")
 -- Params    : @TenantId INT, @Month INT, @Year INT
@@ -21,6 +21,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @Today DATE = CAST(GETDATE() AS DATE);
 	DECLARE @MonthStart DATE = DATEFROMPARTS(@Year, @Month, 1);
 	DECLARE @MonthEnd DATE = EOMONTH(@MonthStart);;
@@ -116,6 +118,19 @@ BEGIN
 					END), 0) AS Aging90Plus
 	FROM Outstanding o
 	JOIN dbo.Orders ao WITH (NOLOCK) ON ao.OrderId = o.OrderId;
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END;
 
 GO

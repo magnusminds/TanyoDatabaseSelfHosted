@@ -1,9 +1,11 @@
-CREATE PROCEDURE [dbo].[Job_GetOrdersForSendOrderInquiryEmail]
+﻿CREATE PROCEDURE [dbo].[Job_GetOrdersForSendOrderInquiryEmail]
 WITH ENCRYPTION
 AS
 BEGIN
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	DECLARE @dt DATETIME = GETDATE();
 
 	DROP TABLE IF EXISTS #TenantSMTPDetailstmp
@@ -115,6 +117,19 @@ BEGIN
 				)
 			)
 	ORDER BY DATEDIFF(day, o.CreatedDate, @dt)
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

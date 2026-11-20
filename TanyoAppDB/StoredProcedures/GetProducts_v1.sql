@@ -1,4 +1,4 @@
---[GetProducts] @TenantId=1, @RoleId='555D131D-3306-40AC-9A7B-6CBDA78A1C2F'
+﻿--[GetProducts] @TenantId=1, @RoleId='555D131D-3306-40AC-9A7B-6CBDA78A1C2F'
 CREATE PROCEDURE [dbo].[GetProducts_v1] (
 	@TenantId INT
 	,@CategoryId BIGINT = NULL
@@ -263,20 +263,15 @@ BEGIN
 
 	END TRY
 
-	BEGIN CATCH
-		DECLARE @ErrorMessage NVARCHAR(4000)
-		DECLARE @ErrorSeverity INT
-		DECLARE @ErrorState INT
+BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
 
-		SELECT @ErrorMessage = ERROR_MESSAGE()
-			,@ErrorSeverity = ERROR_SEVERITY()
-			,@ErrorState = ERROR_STATE()
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
 
-		RAISERROR (
-				@ErrorMessage
-				,@ErrorSeverity
-				,@ErrorState
-				)
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
 	END CATCH
 END
 

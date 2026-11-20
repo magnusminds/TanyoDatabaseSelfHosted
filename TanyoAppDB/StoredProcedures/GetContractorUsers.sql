@@ -1,4 +1,4 @@
-/*
+﻿/*
 	EXEC dbo.GetContractorUsers
 		@TenantId = 1
 */
@@ -12,6 +12,8 @@ BEGIN
 
 	SET NOCOUNT ON;
 
+
+	BEGIN TRY
 	SELECT au.UserId AS ContractorId
 		,au.FirstName + ' ' + au.LastName AS ContractorName
 		,mw.ManufacturingWorkflowId AS WorkflowId
@@ -30,6 +32,19 @@ BEGIN
 	AND ar.NormalizedName = 'CONTRACTOR_' + CAST(@TenantId AS VARCHAR(5))
 	AND au.IsActive = 1
 	ORDER BY 2
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

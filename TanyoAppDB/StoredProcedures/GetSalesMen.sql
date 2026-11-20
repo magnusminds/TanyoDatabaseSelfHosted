@@ -1,9 +1,11 @@
---GetSalesMen  2  
+﻿--GetSalesMen  2  
 CREATE PROC [dbo].[GetSalesMen] 
 @TenantID INT
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SELECT au.UserId
 		,au.FirstName + ' ' + au.LastName + CASE 
 			WHEN @TenantID IN (
@@ -102,6 +104,19 @@ BEGIN
 		-- ANd o.SalesmanId = au.UserId  
 		--)  
 		--ORDER BY 2  
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

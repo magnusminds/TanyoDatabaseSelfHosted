@@ -1,8 +1,10 @@
-CREATE Procedure DeleteDeletedOrders
+﻿CREATE Procedure DeleteDeletedOrders
 WITH ENCRYPTION
 AS
 BEGIN
 
+
+	BEGIN TRY
 /* Take Backup of the data which will going to be be deleted
 	SELECT OrderId
 	INTO #Orders
@@ -187,6 +189,19 @@ BEGIN
 	DELETE OD
 	FROM Orders OD
 	INNER JOIN #Orders ORD ON OD.OrderId = ORD.OrderId
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO

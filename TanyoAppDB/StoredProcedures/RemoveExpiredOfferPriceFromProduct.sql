@@ -1,4 +1,4 @@
--- =============================================  
+﻿-- =============================================  
 -- Author  : MagnusMinds  
 -- Create date : 02-07-2025  
 -- Description : Remove the offer price when the offer is expire
@@ -10,6 +10,8 @@ CREATE PROCEDURE [dbo].[RemoveExpiredOfferPriceFromProduct]
 WITH ENCRYPTION
 AS
 BEGIN
+
+	BEGIN TRY
 	SET NOCOUNT OFF;
 
 	DECLARE @Date DATE = GETDATE();
@@ -47,6 +49,19 @@ BEGIN
 			p.WholesalerOfferPrice IS NOT NULL
 		)
 
+
+	END TRY
+
+	BEGIN CATCH
+		DECLARE @ObjectName VARCHAR(500)
+			,@ErrorMsg VARCHAR(MAX);
+
+		SET @ObjectName = OBJECT_NAME(@@PROCID);
+		SET @ErrorMsg = ERROR_MESSAGE();
+
+		EXEC dbo.SaveDBErrorLog @ObjectName = @ObjectName
+			,@ErrorMsg = @ErrorMsg;
+	END CATCH
 END
 
 GO
