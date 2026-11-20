@@ -10,6 +10,7 @@
   ,@PageSize = 100  
   ,@SortBy = 'LeaveDate'  
   ,@SortOrder = 'ASC'  
+  ,@StatusList = '1,2'  
 */
 CREATE PROCEDURE [dbo].[ReportLeaveApplication] (
 	@TenantId INT
@@ -21,6 +22,7 @@ CREATE PROCEDURE [dbo].[ReportLeaveApplication] (
 	,@PageSize INT = 100
 	,@SortBy VARCHAR(50) = 'LeaveDate'
 	,@SortOrder VARCHAR(50) = 'ASC'
+	,@StatusList VARCHAR(50) = NULL
 	)
 WITH ENCRYPTION
 AS
@@ -38,6 +40,7 @@ BEGIN
 		,lad.LeaveType AS [LeaveTypeInt]
 		,CAST(lad.LeaveType AS VARCHAR) AS [LeaveType]
 		,aua.FirstName + ' ' + aua.LastName [ApprovedBy]
+		,CAST(la.STATUS AS INT) AS [StatusInt]
 		,COUNT(1) OVER (PARTITION BY 1) AS TotalCount
 	FROM [dbo].[LeaveApplications] AS la WITH (NOLOCK)
 	INNER JOIN [dbo].[LeaveApplicationDetails] lad WITH (NOLOCK) ON lad.LeaveApplicationID = la.LeaveApplicationID
@@ -46,11 +49,17 @@ BEGIN
 	INNER JOIN [dbo].[LeaveCategory] AS lc WITH (NOLOCK) ON la.LeaveCategoryID = lc.LeaveCategoryID
 		AND lc.TenantId = @TenantId
 	INNER JOIN [dbo].[AspNetUsers] AS au WITH (NOLOCK) ON au.UserId = la.UserID
-	INNER JOIN [dbo].[AspNetUsers] AS aua WITH (NOLOCK) ON aua.UserId = la.ApprovedBy
+	LEFT JOIN [dbo].[AspNetUsers] AS aua WITH (NOLOCK) ON aua.UserId = la.ApprovedBy
 	INNER JOIN [dbo].[UserTenantMapping] utm WITH (NOLOCK) ON utm.UserId = au.UserId
 		AND utm.TenantId = @TenantId
 	WHERE utm.TenantId = @TenantId
-		AND la.STATUS = 2
+		AND (
+			@StatusList IS NULL
+			OR la.STATUS IN (
+				SELECT TRY_CAST(value AS INT)
+				FROM STRING_SPLIT(@StatusList, ',')
+				)
+			)
 		AND lad.LeaveDate >= @StartDate
 		AND lad.LeaveDate <= @EndDate
 		AND (
@@ -120,6 +129,16 @@ BEGIN
 			WHEN @SortBy = 'ApprovedBy'
 				AND @SortOrder = 'DESC'
 				THEN aua.FirstName + ' ' + aua.LastName
+			END DESC
+		,CASE
+			WHEN @SortBy = 'Status'
+				AND @SortOrder = 'ASC'
+				THEN la.STATUS
+			END ASC
+		,CASE
+			WHEN @SortBy = 'Status'
+				AND @SortOrder = 'DESC'
+				THEN la.STATUS
 			END DESC OFFSET(@PageIndex - 1) * @PageSize ROWS
 
 	FETCH NEXT @PageSize ROWS ONLY;
