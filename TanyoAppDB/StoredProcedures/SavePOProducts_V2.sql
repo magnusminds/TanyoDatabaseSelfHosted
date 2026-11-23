@@ -31,7 +31,7 @@ EXEC dbo.SavePOProducts_V2
     @OrderId = NULL,    
     @OutputPOProductId = @OutputPOProductId OUTPUT;    
 */
-CREATE PROC [dbo].[SavePOProducts_V2] (
+CREATE OR ALTER PROC [dbo].[SavePOProducts_V2] (
 	@POProductId BIGINT
 	,@TenantId BIGINT
 	,@VendorId BIGINT
@@ -63,6 +63,22 @@ BEGIN
 			,@UnPublishedProducts NVARCHAR(MAX)
 			,@UnmappedProducts NVARCHAR(MAX)
 			,@UnmappedProductsFlag BIT = 0;
+
+		IF @POProductId > 0
+			AND NOT EXISTS (
+				SELECT 1
+				FROM dbo.POProducts WITH (NOLOCK)
+				WHERE POProductId = @POProductId
+					AND [Status] = 1
+				)
+		BEGIN
+			SELECT CAST(0 AS BIGINT) AS NewPOProductId
+				,CAST(0 AS BIT) AS StatusCode
+				,'Only Pending purchase orders can be updated.' AS [Message]
+				,CAST(0 AS BIT) AS UnmappedProductsFlag;
+
+			RETURN
+		END
   
   DROP TABLE IF EXISTS #POItems  
   
