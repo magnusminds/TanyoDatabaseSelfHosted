@@ -8,6 +8,7 @@ CREATE TABLE [dbo].[WrkProducts] (
     [Height]          VARCHAR (MAX)                                      NULL,
     [Depth]           VARCHAR (MAX)                                      NULL,
     [Diameter]        VARCHAR (MAX)                                      NULL,
+    [Unit]            VARCHAR (250)                                      NULL,
     [Status]          INT                                                DEFAULT ((0)) NOT NULL,
     [ErrorMessage]    VARCHAR (MAX)                                      NULL,
     [CreatedBy]       BIGINT                                             NOT NULL,

@@ -36,6 +36,8 @@ BEGIN TRY
 		,@Height VARCHAR(MAX)
 		,@Depth VARCHAR(MAX)
 		,@Diameter VARCHAR(MAX)
+		,@Unit VARCHAR(250)
+		,@DimensionUnitId INT
 		,@WarehouseName VARCHAR(MAX)
 		,@dt DATETIMEOFFSET = SYSDATETIMEOFFSET()
 		,@dtUTC DATETIME = GETUTCDATE()
@@ -83,9 +85,27 @@ BEGIN TRY
 		,@Height = Height
 		,@Depth = Depth
 		,@Diameter = Diameter
+		,@Unit = TRIM(Unit)
 		,@WarehouseName = WarehouseName
 	FROM WrkProducts WITH (NOLOCK)
 	WHERE WrkProductID = @WrkProductID
+
+	SELECT TOP 1 @DimensionUnitId = LV.LookupValueId
+	FROM LookupValues LV WITH (NOLOCK)
+	INNER JOIN Lookups L WITH (NOLOCK) ON L.LookupId = LV.LookupId
+	WHERE L.LookupName = 'Unit'
+		AND L.TenantId = @TenantId
+		AND L.IsDeleted = 0
+		AND LV.IsDeleted = 0
+		AND (
+			LV.LookupValueName = @Unit
+			OR (
+				(ISNULL(@Unit, '') = '' OR @Unit IN ('Inches', 'Inch', 'in'))
+				AND LV.LookupValueName IN ('Inches', 'Inch', 'in')
+				)
+			)
+	ORDER BY CASE WHEN LV.LookupValueName = @Unit THEN 0 ELSE 1 END
+		,LV.LookupValueId
 
 	IF ISNULL(@VendorName,'') <> ''
 	BEGIN
@@ -222,6 +242,9 @@ BEGIN TRY
 	        SET @ErrorMessage = ISNULL(@ErrorMessage, '') + 'Diameter exceeds the limit of 9999.99. '
 	END
 
+	IF ISNULL(@Unit, '') <> '' AND @DimensionUnitId IS NULL
+		SET @ErrorMessage = ISNULL(@ErrorMessage, '') + 'Unit ''' + @Unit + ''' does not exist. '
+
 	IF ISNULL(@CostPrice,'') <> ''
 	BEGIN
 	    SET @TempDecimal = TRY_CAST(@CostPrice AS DECIMAL(18,2))
@@ -279,6 +302,7 @@ BEGIN TRY
 			,Height
 			,Depth
 			,Diameter
+			,DimensionUnitId
 			--,CostPrice
 			--,RetailerPrice
 			--,WholesalerPrice
@@ -313,6 +337,7 @@ BEGIN TRY
 						THEN 1
 					ELSE CAST(@Diameter AS NUMERIC(18, 2))
 					END
+			,@DimensionUnitId
 			--,ISNULL(TRY_CAST(@CostPrice AS numeric(18, 2)),0)
 			--,ISNULL(TRY_CAST(@RetailerPrice AS numeric(18, 2)),0)
 			--,ISNULL(TRY_CAST(@WholesalerPrice AS numeric(18, 2)),0)
