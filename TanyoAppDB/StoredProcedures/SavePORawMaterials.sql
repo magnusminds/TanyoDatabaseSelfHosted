@@ -1,4 +1,4 @@
-CREATE   PROC [dbo].[SavePORawMaterials]
+CREATE OR ALTER   PROC [dbo].[SavePORawMaterials]
 (
 	@PORawMaterialId BIGINT
 	,@TenantId BIGINT
@@ -15,6 +15,20 @@ BEGIN
 	SET XACT_ABORT ON;
 
 	BEGIN TRY
+		IF @PORawMaterialId > 0
+			AND NOT EXISTS (
+				SELECT 1
+				FROM dbo.PORawMaterials WITH (NOLOCK)
+				WHERE PORawMaterialId = @PORawMaterialId
+					AND [Status] = 1
+				)
+		BEGIN
+			SELECT CAST(0 AS BIGINT) AS NewPORawMaterialId
+				,'Only Pending purchase orders can be updated.' AS [Message];
+
+			RETURN
+		END
+
 		BEGIN TRAN SavePORawMaterials
 
 		DECLARE @NewPORawMaterialId BIGINT
@@ -123,7 +137,8 @@ BEGIN
 
 		COMMIT TRAN SavePORawMaterials
 
-		SELECT @NewPORawMaterialId AS PORawMaterialId  -- Return final ID
+		SELECT @NewPORawMaterialId AS NewPORawMaterialId
+			,'' AS [Message]
 	END TRY
 	BEGIN CATCH
 		IF @@TRANCOUNT > 0 
