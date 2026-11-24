@@ -1,4 +1,4 @@
-﻿--Author		: kishan kalena
+--Author		: kishan kalena
 --Create date	: 08-09-2023
 --Description	: Report - Inward Value
 -- =============================================
@@ -76,14 +76,18 @@ BEGIN
 					AND osi.IsQuantityOnHold = 1
 				GROUP BY OSI.SubjectId
 				), 0) AS NUMERIC(18,2)) AS OnHold
+		,CAST(CASE WHEN cat.CategoryTypeId = 2
+				THEN 1
+				ELSE 0
+			END AS BIT) AS IsFabric
 		,COUNT(1) OVER (PARTITION BY 1) AS TotalCount
-				from Products as p WITH (NOLOCK)
-				INNER JOIN Categories as cat WITH (NOLOCK) on p.CategoryId = cat.CategoryId
-				--INNER JOIN dbo.AspNetUsers AS [as] WITH (NOLOCK) ON p.CreatedBy = [as].UserId
-				LEFT JOIN ProductQuantities ia WITH (NOLOCK) ON p.ProductId = ia.ProductId
-				--LEFT JOIN StockOnHold sh WITH (NOLOCK) ON p.ProductId = sh.ProductId
-				--AND sh.IsStockOnHold = 1
-				--AND sh.ProductId = P.ProductId
+		from Products as p WITH (NOLOCK)
+		INNER JOIN Categories as cat WITH (NOLOCK) on p.CategoryId = cat.CategoryId
+		--INNER JOIN dbo.AspNetUsers AS [as] WITH (NOLOCK) ON p.CreatedBy = [as].UserId
+		LEFT JOIN ProductQuantities ia WITH (NOLOCK) ON p.ProductId = ia.ProductId
+		--LEFT JOIN StockOnHold sh WITH (NOLOCK) ON p.ProductId = sh.ProductId
+		--AND sh.IsStockOnHold = 1
+		--AND sh.ProductId = P.ProductId
 		WHERE cat.IsDeleted = 0 
 				AND P.TenantId = @TenantId
 				AND P.Status != 3

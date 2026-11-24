@@ -1,4 +1,4 @@
-﻿/*  --Author  : kishan kalena 
+/*  --Author  : kishan kalena 
 --Create date : 08-09-2023  
 --Description : ReportProductsWithoutPrice  
 -- =============================================     
@@ -37,6 +37,10 @@ BEGIN
 			,0.0 AS Inquiry
 			,0.0 AS ReadyToDelivered
 			,0.0 AS OnHold
+			,CAST(CASE WHEN cat.CategoryTypeId = 2
+				THEN 1
+				ELSE 0
+			END AS BIT) AS IsFabric
 			,COUNT(1) OVER (PARTITION BY 1) AS TotalCount
 		FROM Products AS p WITH (NOLOCK)
 		INNER JOIN Categories AS cat WITH (NOLOCK) ON p.CategoryId = cat.CategoryId
