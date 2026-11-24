@@ -96,7 +96,7 @@ BEGIN
 				);
 
 			INSERT INTO @ChangedLogs (Description)
-			SELECT 'Offer ' + ISNULL(@OfferTitle, '') + ' - ' + FieldName + ' changed from ''' + OldVal + ''' to ''' + NewVal + '''.'
+			SELECT 'Offer ' + ISNULL(@OfferTitle, '') + ' - ' + FieldName + ' changed from ''' + ISNULL(OldVal, '') + ''' to ''' + ISNULL(NewVal, '') + '''.'
 			FROM (
 				VALUES (
 					'Type'
