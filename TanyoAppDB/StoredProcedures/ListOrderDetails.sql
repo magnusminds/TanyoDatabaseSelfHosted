@@ -169,7 +169,10 @@ BEGIN
 			) AS sh ON sh.OrderId = o.OrderId
 		LEFT JOIN dbo.Locations la WITH (NOLOCK) ON la.LocationID = o.LocationID
 			AND la.TenantID = o.TenantId
-			AND la.IsDeleted = 0'
+			AND la.IsDeleted = 0
+		LEFT JOIN dbo.Vendors v WITH (NOLOCK) ON v.DealerCustomerId = c.CustomerId
+			AND v.IsDealer = 1
+			AND v.TenantId = o.TenantId'
 			;
 
 		SELECT @WhereCondition = ' WHERE o.TenantId = @TenantId AND o.Status <> 9';
@@ -181,13 +184,13 @@ BEGIN
 			SET @WhereCondition = @WhereCondition + ' AND o.SalesmanId = @SalesmanId'
 
 		IF @CustomerName IS NOT NULL
-			SET @WhereCondition = @WhereCondition + ' AND (ISNULL(c.FirstName,'''') + '' '' + ISNULL(c.LastName,'''')) LIKE ''%'' + @CustomerName + ''%''';
+			SET @WhereCondition = @WhereCondition + ' AND ((ISNULL(c.FirstName,'''') + '' '' + ISNULL(c.LastName,'''')) LIKE ''%'' + @CustomerName + ''%'' OR (c.CustomerTypeId = 4 AND v.ContactPersonName LIKE ''%'' + @CustomerName + ''%''))';
 
 		IF @RefferedBy IS NOT NULL
 			SET @WhereCondition = @WhereCondition + ' AND o.RefferedBy = @RefferedBy'
 
 		IF @PhoneNumber IS NOT NULL
-			SET @WhereCondition = @WhereCondition + ' AND (c.PhoneNumber LIKE ''%'' + @PhoneNumber + ''%'' OR c.AltPhoneNumber LIKE ''%'' + @PhoneNumber + ''%'')';
+			SET @WhereCondition = @WhereCondition + ' AND (c.PhoneNumber LIKE ''%'' + @PhoneNumber + ''%'' OR c.AltPhoneNumber LIKE ''%'' + @PhoneNumber + ''%'' OR (c.CustomerTypeId = 4 AND v.ContactPersonPhone LIKE ''%'' + @PhoneNumber + ''%''))';
 
 		IF @OrderType IS NOT NULL
 			SET @WhereCondition = @WhereCondition + ' AND o.OrderType = @OrderType'
