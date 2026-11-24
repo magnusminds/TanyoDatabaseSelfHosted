@@ -44,6 +44,7 @@ BEGIN
 		,COUNT(*) OVER () AS TotalCount
 	FROM [dbo].[Leads] L WITH (NOLOCK)
 	LEFT JOIN Customers C WITH (NOLOCK) ON C.CustomerId = L.CustomerId
+		AND C.TenantId = @TenantId
 		AND C.IsDeleted = 0
 	LEFT JOIN AspNetUsers AU WITH (NOLOCK) ON AU.UserId = L.SalesmanId
 	LEFT JOIN LookupValues LKV WITH (NOLOCK) ON L.LeadSourceId = LKV.LookupValueId
