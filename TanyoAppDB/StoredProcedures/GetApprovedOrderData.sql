@@ -38,6 +38,8 @@ CREATE PROCEDURE [dbo].[GetApprovedOrderData] (
 	,@SortOrder VARCHAR(50) = 'DESC'
 	,@ProductTitle VARCHAR(150) = NULL
 	,@ModelNo VARCHAR(150) = NULL
+	,@RoleId NVARCHAR(MAX) = NULL
+	,@UserId INT = NULL
 	)
 WITH ENCRYPTION
 AS
@@ -47,6 +49,8 @@ BEGIN
 	BEGIN TRY
 		DECLARE @OrderFromDateTime DATETIMEOFFSET = NULL
 			,@OrderToDateTime DATETIMEOFFSET = NULL
+			,@IsAdmin BIT = 0
+			,@SupperAccess BIT = 0
 
 		SELECT @OrderFromDateTime = CAST(@OrderFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
 			,@OrderToDateTime = CAST(@OrderToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30'
@@ -76,6 +80,34 @@ BEGIN
 		FROM SubjectTypes WITH (NOLOCK)
 		WHERE SubjectTypeName = 'Fabrics'
 			AND TenantId = @TenantId;
+
+		SELECT @IsAdmin = CASE 
+			WHEN EXISTS (
+					SELECT 1
+					FROM AspNetRoleClaims WITH (NOLOCK)
+					WHERE RoleId = @RoleId
+						AND ClaimValue IN (
+							'Permissions.App.Order.Approve'
+							,'Permissions.General.Order.Approve'
+							)
+					)
+				THEN 1
+			ELSE 0
+			END
+
+		SELECT @SupperAccess = CASE 
+			WHEN EXISTS (
+					SELECT 1
+					FROM AspNetRoleClaims WITH (NOLOCK)
+					WHERE RoleId = @RoleId
+						AND ClaimValue IN (
+							'Permissions.App.Order.SuperAccess'
+							,'Permissions.General.Order.SuperAccess'
+							)
+					)
+				THEN 1
+			ELSE 0
+			END
 
 		SELECT os.OrderId
 			,o.OrderNo
@@ -191,6 +223,23 @@ BEGIN
 						)
 					)
 				)
+			AND (
+				@IsAdmin = 1
+				OR (
+					@SupperAccess = 1
+					AND (
+						@OrderType IS NULL
+						OR o.OrderType = @OrderType
+					)
+				)
+				OR (
+					o.SalesmanId = @UserId
+					AND (
+						@OrderType IS NULL
+						OR o.OrderType = @OrderType
+					)
+				)
+			)
 		ORDER BY CASE 
 				WHEN @SortBy = 'OrderNo'
 					AND @SortOrder = 'ASC'

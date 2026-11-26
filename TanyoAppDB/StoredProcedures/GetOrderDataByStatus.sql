@@ -27,6 +27,8 @@ CREATE PROCEDURE [dbo].[GetOrderDataByStatus] (
 	,@ProductTitle VARCHAR(150) = NULL
 	,@PaymentCollectionStatus INT = - 1
 	,@ModelNo VARCHAR(100) = NULL
+	,@RoleId NVARCHAR(MAX) = NULL
+	,@UserId INT = NULL
 	)
 WITH ENCRYPTION
 AS
@@ -36,9 +38,39 @@ BEGIN
 	BEGIN TRY
 		DECLARE @OrderFromDateTime DATETIMEOFFSET = NULL
 			,@OrderToDateTime DATETIMEOFFSET = NULL
+			,@IsAdmin BIT = 0
+			,@SupperAccess BIT = 0
 
 		SELECT @OrderFromDateTime = CAST(@OrderFromDate AS VARCHAR(10)) + ' 00:00:00.0000001 +5:30'
 			,@OrderToDateTime = CAST(@OrderToDate AS VARCHAR(10)) + ' 23:59:59.9999999 +5:30'
+
+				SELECT @IsAdmin = CASE 
+				WHEN EXISTS (
+						SELECT 1
+						FROM AspNetRoleClaims WITH (NOLOCK)
+						WHERE RoleId = @RoleId
+							AND ClaimValue IN (
+								'Permissions.App.Order.Approve'
+								,'Permissions.General.Order.Approve'
+								)
+						)
+					THEN 1
+				ELSE 0
+				END
+
+		SELECT @SupperAccess = CASE 
+				WHEN EXISTS (
+						SELECT 1
+						FROM AspNetRoleClaims WITH (NOLOCK)
+						WHERE RoleId = @RoleId
+							AND ClaimValue IN (
+								'Permissions.App.Order.SuperAccess'
+								,'Permissions.General.Order.SuperAccess'
+								)
+						)
+					THEN 1
+				ELSE 0
+				END
 
 		SELECT osi.OrderId
 			,o.OrderNo
@@ -164,6 +196,23 @@ BEGIN
 				@ModelNo IS NULL
 				OR p.ModelNo LIKE '%' + @ModelNo + '%'
 				)
+			AND (
+				@IsAdmin = 1
+				OR (
+					@SupperAccess = 1
+					AND (
+						@OrderType IS NULL
+						OR o.OrderType = @OrderType
+					)
+				)
+				OR (
+					o.SalesmanId = @UserId
+					AND (
+						@OrderType IS NULL
+						OR o.OrderType = @OrderType
+					)
+				)
+			)
 		ORDER BY CASE 
 				WHEN @SortBy = 'DeliveryNo'
 					AND @SortOrder = 'ASC'
