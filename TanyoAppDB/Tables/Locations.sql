@@ -20,3 +20,6 @@ CREATE TABLE [dbo].[Locations] (
 
 GO
 
+CREATE NONCLUSTERED INDEX IX_Locations_TenantID_IsDeleted
+ON dbo.Locations (TenantID, IsDeleted);
+GO

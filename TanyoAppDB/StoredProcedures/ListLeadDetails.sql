@@ -1,22 +1,22 @@
-/*      
- EXEC [dbo].[ListLeadDetails]      
-   @TenantId = 1      
-  ,@CustomerName  = NULL      
-  ,@PhoneNumber = NULL      
-  ,@SalesmanId  = NULL      
-  ,@LeadSourceId  = NULL     
-  ,@Status  = NULL      
-  ,@Tags  = NULL      
-  ,@LocationID = NULL    
-  ,@PageIndex  = 1      
-  ,@PageSize  = 25      
-  ,@SortBy = 'LastCreatedOn'      
-  ,@SortOrder  = 'DESC'      
-   ,@InquiryFor = NULL    
-   ,@BuyingRangeValueId = NULL  
-   ,@CreatedFromDate = NULL
-   ,@CreatedToDate = NULL
-   ,@PipelineType = NULL
+/*        
+ EXEC [dbo].[ListLeadDetails]        
+   @TenantId = 1        
+  ,@CustomerName  = NULL        
+  ,@PhoneNumber = NULL        
+  ,@SalesmanId  = NULL        
+  ,@LeadSourceId  = NULL       
+  ,@Status  = NULL        
+  ,@Tags  = NULL        
+  ,@LocationID = NULL      
+  ,@PageIndex  = 1        
+  ,@PageSize  = 25        
+  ,@SortBy = 'LastCreatedOn'        
+  ,@SortOrder  = 'DESC'        
+   ,@InquiryFor = NULL      
+   ,@BuyingRangeValueId = NULL    
+   ,@CreatedFromDate = NULL  
+   ,@CreatedToDate = NULL  
+   ,@PipelineType = NULL  
  */
 CREATE PROC [dbo].[ListLeadDetails] (
 	@TenantId BIGINT
@@ -42,10 +42,23 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	DECLARE @BuyingRangeLookupId INT
+		,@LeadSourceLookupId INT;
+
+	SELECT @BuyingRangeLookupId = LookupId
+	FROM Lookups WITH(NOLOCK)
+	WHERE TenantId = @TenantId
+		AND LookupName = 'BuyingRange'
+
+	SELECT @LeadSourceLookupId = LookupId
+	FROM Lookups WITH(NOLOCK)
+	WHERE TenantId = @TenantId
+		AND LookupName = 'LeadSources'
+
 	BEGIN TRY
 		SELECT l.LeadId
 			,
-			--ISNULL(l.FirstName, '') + ' ' + ISNULL(l.LastName, '') AS CustomerName,    
+			--ISNULL(l.FirstName, '') + ' ' + ISNULL(l.LastName, '') AS CustomerName,      
 			LTRIM(RTRIM(ISNULL(NULLIF(ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, ''), ' '), ISNULL(l.FirstName, '') + ' ' + ISNULL(l.LastName, '')))) AS CustomerName
 			,ISNULL(l.LeadSourceId, 0) AS LeadSourceId
 			,CASE 
@@ -61,7 +74,7 @@ BEGIN
 			,ISNULL(ll.LabelName, '') AS LabelName
 			,ISNULL(ll.ColorCode, '') AS ColorCode
 			,
-			--l.PhoneNumber,    
+			--l.PhoneNumber,      
 			ISNULL(c.PhoneNumber, l.PhoneNumber) AS PhoneNumber
 			,l.Notes AS InquiryAbout
 			,fl.FollowUpComment AS FollowupComment
@@ -105,7 +118,8 @@ BEGIN
 				END AS PipelineName
 			,COUNT(1) OVER () AS TotalCount
 		FROM dbo.Leads l WITH (NOLOCK)
-		LEFT JOIN dbo.Customers AS c WITH (NOLOCK) ON l.CustomerId = c.CustomerId
+		INNER JOIN dbo.Customers AS c WITH (NOLOCK) ON l.CustomerId = c.CustomerId
+			AND c.TenantId = @TenantId
 		LEFT JOIN dbo.AspNetUsers au WITH (NOLOCK) ON au.UserId = l.SalesmanId
 		LEFT JOIN dbo.Labels ll WITH (NOLOCK) ON ll.LabelId = l.Priority
 			AND ll.TenantId = l.TenantId
@@ -113,8 +127,10 @@ BEGIN
 			AND la.TenantID = l.TenantId
 			AND la.IsDeleted = 0
 		LEFT JOIN dbo.LookupValues lv WITH (NOLOCK) ON lv.LookupValueId = l.LeadSourceId
+			AND lv.LookupId = @LeadSourceLookupId
 			AND lv.IsDeleted = 0
 		LEFT JOIN dbo.LookupValues br WITH (NOLOCK) ON br.LookupValueId = l.BuyingRangeValueId
+			AND br.LookupId = @BuyingRangeLookupId
 			AND br.IsDeleted = 0
 		LEFT JOIN (
 			SELECT LeadId
@@ -127,8 +143,8 @@ BEGIN
 			AND fl.rn = 1
 		WHERE l.TenantId = @TenantId
 			AND l.Status <> 6 -- Deleted      
-			--AND (@CustomerName IS NULL OR (ISNULL(l.FirstName, '') + ' ' + ISNULL(l.LastName, '')) LIKE '%' + @CustomerName + '%')    
-			--AND (@PhoneNumber IS NULL OR l.PhoneNumber LIKE '%' + @PhoneNumber + '%')    
+			--AND (@CustomerName IS NULL OR (ISNULL(l.FirstName, '') + ' ' + ISNULL(l.LastName, '')) LIKE '%' + @CustomerName + '%')      
+			--AND (@PhoneNumber IS NULL OR l.PhoneNumber LIKE '%' + @PhoneNumber + '%')      
 			AND (
 				@CustomerName IS NULL
 				OR LTRIM(RTRIM(ISNULL(NULLIF(ISNULL(c.FirstName, '') + ' ' + ISNULL(c.LastName, ''), ' '), ISNULL(l.FirstName, '') + ' ' + ISNULL(l.LastName, '')))) LIKE '%' + @CustomerName + '%'
