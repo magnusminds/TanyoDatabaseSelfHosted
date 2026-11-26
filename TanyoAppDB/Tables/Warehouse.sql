@@ -18,3 +18,7 @@ CREATE TABLE [dbo].[Warehouse] (
 
 GO
 
+
+CREATE NONCLUSTERED INDEX IX_Warehouse_TenantID_IsDeleted
+ON dbo.Warehouse (TenantID, IsDeleted);
+GO

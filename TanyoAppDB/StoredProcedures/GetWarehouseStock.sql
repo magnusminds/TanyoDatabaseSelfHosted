@@ -42,6 +42,7 @@ BEGIN
 			@Search IS NULL
 			OR LTRIM(RTRIM(@Search)) = ''
 			OR p.ProductTitle LIKE '%' + @Search + '%'
+   			OR p.ModelNo LIKE '%' + @Search + '%'  
 		)
 	ORDER BY p.ProductTitle
 
